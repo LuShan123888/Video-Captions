@@ -64,8 +64,8 @@ def get_sessdata():
                 if line.startswith('BILIBILI_SESSDATA='):
                     return line.strip().split('=', 1)[1].strip('\"\'')
 
-    # 3. 默认 SESSDATA（用户提供的）
-    return 'a29cd67a%2C1783361515%2C50034%2A12CjDSSVR0rqmyiwVKRM-A9xXCqdyCKXahZRKbybbFNbAlV5icth_XxXfoR7jqekomF5QSVnBybDZoUkRfOU1ZUHlSSDdNVk5DY2pwcFZ1eURzZ0Q1cHNXcjNnZV8zQkFpdWprUG1qQUZ2MTh1VWstdjFIcjRaMUlaSGRjY2swejlYSG9FcWxnWU5nIIEC'
+    # 3. 未找到SESSDATA，返回None
+    return None
 
 def convert_to_simplified(srt_filename):
     """将字幕文件从繁体转换为简体"""

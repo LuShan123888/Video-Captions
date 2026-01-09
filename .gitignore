@@ -8,9 +8,18 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+
+# Environment variables (敏感信息)
+.env
+.env.local
+.env.*.local
 
 # Output files
 outputs/
 *.mp4
 *.wav
 *.srt
+
+# uv lock file (可选，根据需求)
+# uv.lock
