@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 B站字幕 MCP 服务器
 
 提供获取B站视频信息和字幕的工具。
 """
+
+import sys
+import io
+
+# 确保stdout/stderr使用UTF-8编码
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+else:
+    # Python 3.6及更早版本的备用方案
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 from typing import Optional
 from enum import Enum
