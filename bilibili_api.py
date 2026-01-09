@@ -252,6 +252,9 @@ async def download_subtitle_content(
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.get(subtitle_url, headers=headers)
         response.raise_for_status()
+        # 确保响应使用UTF-8编码
+        if hasattr(response, '_content'):
+            response._content = response.content.decode('utf-8').encode('utf-8')
         subtitle_json = response.json()
 
     body = subtitle_json.get('body', [])

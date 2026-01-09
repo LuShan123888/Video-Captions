@@ -161,7 +161,7 @@ class ListSubtitlesInput(BaseModel):
         "openWorldHint": True
     }
 )
-async def bilibili_get_video_info(params: VideoUrlInput) -> str:
+async def bilibili_get_video_info(params: VideoUrlInput) -> dict:
     '''获取B站视频的基本信息，包括标题、时长、UP主等。
 
     此工具用于查询B站视频的元数据信息，不下载任何字幕内容。
@@ -202,15 +202,13 @@ async def bilibili_get_video_info(params: VideoUrlInput) -> str:
     '''
     try:
         info = await get_video_info(params.url)
-
-        # 转换为JSON格式返回
-        import json
-        return json.dumps(info, ensure_ascii=False, indent=2)
+        # 直接返回字典，让FastMCP处理序列化
+        return info
 
     except ValueError as e:
-        return f"Error: {str(e)}"
+        return {"error": str(e)}
     except Exception as e:
-        return f"Error: 获取视频信息时发生错误: {type(e).__name__}: {str(e)}"
+        return {"error": f"获取视频信息时发生错误: {type(e).__name__}", "message": str(e)}
 
 
 @mcp.tool(
@@ -223,7 +221,7 @@ async def bilibili_get_video_info(params: VideoUrlInput) -> str:
         "openWorldHint": True
     }
 )
-async def bilibili_list_subtitles(params: ListSubtitlesInput) -> str:
+async def bilibili_list_subtitles(params: ListSubtitlesInput) -> dict:
     '''列出视频可用的字幕语言和类型。
 
     此工具用于查询视频有哪些字幕可选，不下载字幕内容。
@@ -268,19 +266,16 @@ async def bilibili_list_subtitles(params: ListSubtitlesInput) -> str:
     '''
     try:
         result = await list_subtitles(params.url, params.sessdata)
-
-        import json
-        return json.dumps(result, ensure_ascii=False, indent=2)
+        # 直接返回字典，让FastMCP处理序列化
+        return result
 
     except Exception as e:
-        import json
-        error_result = {
+        return {
             "available": False,
             "subtitles": [],
             "subtitle_count": 0,
             "error": str(e)
         }
-        return json.dumps(error_result, ensure_ascii=False, indent=2)
 
 
 @mcp.tool(
@@ -293,7 +288,7 @@ async def bilibili_list_subtitles(params: ListSubtitlesInput) -> str:
         "openWorldHint": True
     }
 )
-async def bilibili_download_subtitles(params: DownloadSubtitlesInput) -> str:
+async def bilibili_download_subtitles(params: DownloadSubtitlesInput) -> dict:
     '''下载B站视频字幕内容，支持多种格式。
 
     此工具会下载完整的字幕内容。对于长视频，内容可能会被截断。
@@ -368,17 +363,14 @@ async def bilibili_download_subtitles(params: DownloadSubtitlesInput) -> str:
             params.sessdata
         )
 
-        # 转换为JSON格式返回
-        import json
-        return json.dumps(result, ensure_ascii=False, indent=2)
+        # 直接返回字典，让FastMCP处理序列化
+        return result
 
     except Exception as e:
-        import json
-        error_result = {
+        return {
             "error": f"下载字幕时发生错误: {type(e).__name__}",
             "message": str(e)
         }
-        return json.dumps(error_result, ensure_ascii=False, indent=2)
 
 
 # ============================================================================
