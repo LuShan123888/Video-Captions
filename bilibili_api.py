@@ -218,94 +218,105 @@ async def download_subtitle_content(
             "video_title": "视频标题"
         }
     """
-    # 先获取字幕列表
-    subtitle_info = await list_subtitles(url, sessdata)
+    try:
+        # 先获取字幕列表
+        subtitle_info = await list_subtitles(url, sessdata)
 
-    if not subtitle_info['available']:
-        return {
-            "error": "该视频没有可用字幕",
-            "suggestion": "对于无字幕视频，可以使用 ASR 功能生成字幕"
+        if not subtitle_info['available']:
+            return {
+                "error": "该视频没有可用字幕",
+                "suggestion": "对于无字幕视频，可以使用 ASR 功能生成字幕"
+            }
+
+        # 选择中文AI字幕
+        zh_subtitle = None
+        for sub in subtitle_info['subtitles']:
+            if sub['lan'] in ['ai-zh', 'zh-Hans', 'zh-CN', 'zh']:
+                zh_subtitle = sub
+                break
+
+        if not zh_subtitle:
+            zh_subtitle = subtitle_info['subtitles'][0]
+
+        # 获取视频信息
+        video_info = await get_video_info(url, sessdata)
+
+        # 下载字幕内容
+        subtitle_url = zh_subtitle['subtitle_url']
+        if not subtitle_url.startswith('http'):
+            subtitle_url = 'https:' + subtitle_url
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         }
 
-    # 选择中文AI字幕
-    zh_subtitle = None
-    for sub in subtitle_info['subtitles']:
-        if sub['lan'] in ['ai-zh', 'zh-Hans', 'zh-CN', 'zh']:
-            zh_subtitle = sub
-            break
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(subtitle_url, headers=headers)
+            response.raise_for_status()
+            subtitle_json = response.json()
 
-    if not zh_subtitle:
-        zh_subtitle = subtitle_info['subtitles'][0]
+        body = subtitle_json.get('body', [])
 
-    # 获取视频信息
-    video_info = await get_video_info(url, sessdata)
+        # 根据格式返回内容
+        if format == ResponseFormat.JSON:
+            return {
+                "source": "bilibili_api",
+                "format": "json",
+                "subtitle_count": len(body),
+                "subtitles": body,
+                "video_title": video_info['title']
+            }
 
-    # 下载字幕内容
-    subtitle_url = zh_subtitle['subtitle_url']
-    if not subtitle_url.startswith('http'):
-        subtitle_url = 'https:' + subtitle_url
+        elif format == ResponseFormat.SRT:
+            srt_content = ""
+            for i, item in enumerate(body):
+                start_time = item['from']
+                end_time = item['to']
+                content = item['content']
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    }
+                start_h, start_m, start_s = int(start_time // 3600), int((start_time % 3600) // 60), start_time % 60
+                end_h, end_m, end_s = int(end_time // 3600), int((end_time % 3600) // 60), end_time % 60
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.get(subtitle_url, headers=headers)
-        response.raise_for_status()
-        # 确保响应使用UTF-8编码
-        if hasattr(response, '_content'):
-            response._content = response.content.decode('utf-8').encode('utf-8')
-        subtitle_json = response.json()
+                srt_content += f"{i+1}\n"
+                srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
+                srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
+                srt_content += f"\n{content}\n\n"
 
-    body = subtitle_json.get('body', [])
+            return {
+                "source": "bilibili_api",
+                "format": "srt",
+                "subtitle_count": len(body),
+                "content": srt_content,
+                "video_title": video_info['title']
+            }
 
-    # 根据格式返回内容
-    if format == ResponseFormat.JSON:
+        else:  # TEXT format
+            text_lines = [item['content'] for item in body]
+            text_content = '\n'.join(text_lines)
+
+            # 检查字符限制
+            if len(text_content) > CHARACTER_LIMIT:
+                text_content = text_content[:CHARACTER_LIMIT] + "\n\n... (内容已截断)"
+
+            return {
+                "source": "bilibili_api",
+                "format": "text",
+                "subtitle_count": len(body),
+                "content": text_content,
+                "video_title": video_info['title']
+            }
+
+    except UnicodeEncodeError as e:
+        # 捕获编码错误并返回更友好的错误信息
         return {
-            "source": "bilibili_api",
-            "format": "json",
-            "subtitle_count": len(body),
-            "subtitles": body,
-            "video_title": video_info['title']
+            "error": "encoding_error",
+            "message": f"字符编码错误: {str(e)}",
+            "suggestion": "请确保系统使用UTF-8编码"
         }
-
-    elif format == ResponseFormat.SRT:
-        srt_content = ""
-        for i, item in enumerate(body):
-            start_time = item['from']
-            end_time = item['to']
-            content = item['content']
-
-            start_h, start_m, start_s = int(start_time // 3600), int((start_time % 3600) // 60), start_time % 60
-            end_h, end_m, end_s = int(end_time // 3600), int((end_time % 3600) // 60), end_time % 60
-
-            srt_content += f"{i+1}\n"
-            srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
-            srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
-            srt_content += f"\n{content}\n\n"
-
+    except Exception as e:
         return {
-            "source": "bilibili_api",
-            "format": "srt",
-            "subtitle_count": len(body),
-            "content": srt_content,
-            "video_title": video_info['title']
-        }
-
-    else:  # TEXT format
-        text_lines = [item['content'] for item in body]
-        text_content = '\n'.join(text_lines)
-
-        # 检查字符限制
-        if len(text_content) > CHARACTER_LIMIT:
-            text_content = text_content[:CHARACTER_LIMIT] + "\n\n... (内容已截断)"
-
-        return {
-            "source": "bilibili_api",
-            "format": "text",
-            "subtitle_count": len(body),
-            "content": text_content,
-            "video_title": video_info['title']
+            "error": f"下载字幕时发生错误: {type(e).__name__}",
+            "message": str(e)
         }
 
 
