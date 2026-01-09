@@ -7,6 +7,17 @@ B站API封装模块 - 为MCP服务器和CLI提供共享功能
 """
 
 import os
+import sys
+import io
+
+# 设置环境变量确保UTF-8编码（必须在其他导入之前）
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# 确保stdout/stderr使用UTF-8编码
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 import re
 from typing import Optional, Dict, Any, List, Tuple
 from enum import Enum
