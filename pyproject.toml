@@ -1,11 +1,17 @@
 [project]
 name = "bilibili-subtitle-fetcher"
 version = "0.1.0"
-description = "Add your description here"
+description = "B站字幕抓取工具及MCP服务器"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "mcp>=0.1.0",
+    "httpx>=0.27.0",
     "faster-whisper>=1.0.0",
     "requests>=2.32.4",
     "opencc-python-reimplemented>=0.1.7",
 ]
+
+[project.scripts]
+bilibili-subtitle = "main:main"
+bilibili-mcp = "mcp_server:main"
