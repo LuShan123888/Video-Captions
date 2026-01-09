@@ -76,8 +76,7 @@ uv run python main.py https://www.bilibili.com/video/BV1xx411c7mD/
         "run",
         "--directory",
         "/path/to/bilibili_subtitle_fetcher",
-        "python",
-        "run_mcp.py"
+        "bilibili-mcp"
       ],
       "env": {
         "BILIBILI_SESSDATA": "your SESSDATA value"
@@ -94,7 +93,7 @@ uv run python main.py https://www.bilibili.com/video/BV1xx411c7mD/
   "mcpServers": {
     "bilibili": {
       "command": "python3",
-      "args": ["/path/to/bilibili_subtitle_fetcher/run_mcp.py"],
+      "args": ["/path/to/bilibili_subtitle_fetcher/mcp_server.py"],
       "env": {
         "BILIBILI_SESSDATA": "your SESSDATA value"
       }

@@ -95,10 +95,42 @@ def require_sessdata(sessdata: Optional[str] = None) -> str:
 
 
 def extract_bvid(url: str) -> str:
-    """从URL中提取BV号"""
-    if 'video' in url:
-        return url.split('/')[-2] if url.endswith('/') else url.split('/')[-1]
-    return url.split('/')[-1] if '?' not in url.split('/')[-1] else url.split('/')[-1].split('?')[0]
+    """从URL中提取BV号
+
+    支持多种URL格式:
+    - https://www.bilibili.com/video/BV1xx411c7mD/
+    - https://www.bilibili.com/list/watchlater/?bvid=BV16HqFBZE6N
+    - BV1xx411c7mD
+    """
+    import urllib.parse
+
+    # 直接BV号
+    if url.startswith('BV'):
+        return url
+
+    # 从URL路径提取
+    if '/video/' in url:
+        path = url.split('/video/')[1].split('/')[0]
+        return path.rstrip('/')
+
+    # 从查询参数提取 (稍后观看列表等)
+    if 'bvid=' in url or 'BVID=' in url:
+        parsed = urllib.parse.urlparse(url)
+        params = urllib.parse.parse_qs(parsed.query)
+        bvid = params.get('bvid') or params.get('BVID')
+        if bvid:
+            return bvid[0]
+
+    # 从URL最后一段提取（可能是短链接或直接BV号）
+    last_part = url.rstrip('/').split('/')[-1]
+    # 移除查询参数
+    if '?' in last_part:
+        last_part = last_part.split('?')[0]
+
+    if last_part.startswith('BV'):
+        return last_part
+
+    raise ValueError(f"无法从URL中提取BV号: {url}")
 
 
 async def get_video_info(url: str, sessdata: Optional[str] = None) -> Dict[str, Any]:

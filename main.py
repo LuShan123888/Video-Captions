@@ -97,7 +97,29 @@ def get_video_info(url):
             'Referer': 'https://www.bilibili.com/'
         }
         # 从URL中提取BV号
-        bvid = url.split('/')[-2] if 'video' in url else url.split('/')[-1]
+        # 支持多种URL格式:
+        # - https://www.bilibili.com/video/BV1xx411c7mD/
+        # - https://www.bilibili.com/list/watchlater/?bvid=BV16HqFBZE6N
+        # - BV1xx411c7mD
+        bvid = None
+        if 'video' in url:
+            # 标准视频URL
+            bvid = url.split('/')[-2]
+        elif 'bvid=' in url:
+            # 稍后观看列表等带参数的URL
+            import urllib.parse
+            parsed = urllib.parse.urlparse(url)
+            params = urllib.parse.parse_qs(parsed.query)
+            bvid = params.get('bvid', [None])[0]
+        else:
+            # 直接BV号或短链接
+            bvid = url.strip().split('/')[-1]
+            if 'bvid=' in bvid:
+                bvid = bvid.split('bvid=')[1].split('&')[0]
+
+        if not bvid or not bvid.startswith('BV'):
+            print(f"错误: 无法从URL中提取BV号: {url}")
+            return None, None, None
 
         # 获取视频信息的API
         info_api_url = f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}"
@@ -112,10 +134,10 @@ def get_video_info(url):
             return video_title, cid, bvid
         else:
             print(f"错误: 无法获取视频信息。B站返回: {data['message']}")
-            return None, None
+            return None, None, None
     except Exception as e:
         print(f"错误: 获取视频信息时出错: {e}")
-        return None, None
+        return None, None, None
 
 def get_subtitles_from_bilibili(video_title, cid, bvid, output_dir, video_url):
     """尝试从B站下载已有的字幕"""
@@ -203,9 +225,12 @@ def get_subtitles_from_bilibili(video_title, cid, bvid, output_dir, video_url):
         print(f"错误: 检查或下载字幕时发生错误: {e}")
         return False
 
-def generate_subtitles_with_asr(video_url, safe_video_title, model_size="base", output_dir="."):
+def generate_subtitles_with_asr(video_url, safe_video_title, model_size="base", output_dir=".", bvid=None):
     """使用ASR技术生成字幕"""
     print("\n--- 步骤 2: 正在下载视频并提取音频用于ASR ---")
+    # 如果提供了bvid，使用标准视频URL格式（兼容稍后观看等非标准URL）
+    if bvid:
+        video_url = f"https://www.bilibili.com/video/{bvid}"
     try:
         video_filename = os.path.join(output_dir, f"{safe_video_title}.mp4")
         audio_filename = os.path.join(output_dir, f"{safe_video_title}.wav")
@@ -405,4 +430,4 @@ if __name__ == "__main__":
     # 尝试下载现有字幕
     if not get_subtitles_from_bilibili(video_title, cid, bvid, output_dir, video_url):
         # 如果没有现有字幕，则使用ASR生成
-        generate_subtitles_with_asr(video_url, safe_title, model_size, output_dir)
+        generate_subtitles_with_asr(video_url, safe_title, model_size, output_dir, bvid)

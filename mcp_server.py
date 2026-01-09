@@ -6,22 +6,6 @@ B站字幕 MCP 服务器
 提供获取B站视频信息和字幕的工具。
 """
 
-import os
-import sys
-import io
-
-# 设置环境变量确保UTF-8编码
-os.environ['PYTHONIOENCODING'] = 'utf-8'
-
-# 确保stdout/stderr使用UTF-8编码
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
-else:
-    # Python 3.6及更早版本的备用方案
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-
 from typing import Optional
 from enum import Enum
 from pydantic import BaseModel, Field, field_validator, ConfigDict
@@ -377,5 +361,10 @@ async def bilibili_download_subtitles(params: DownloadSubtitlesInput) -> dict:
 # 主入口
 # ============================================================================
 
-if __name__ == "__main__":
+def main() -> None:
+    """MCP服务器入口点"""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
