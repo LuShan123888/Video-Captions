@@ -67,8 +67,31 @@ def get_sessdata(sessdata: Optional[str] = None) -> Optional[str]:
                 if line.startswith('BILIBILI_SESSDATA='):
                     return line.strip().split('=', 1)[1].strip('"\'')
 
-    # 4. 默认 SESSDATA（用户提供的）
-    return 'a29cd67a%2C1783361515%2C50034%2A12CjDSSVR0rqmyiwVKRM-A9xXCqdyCKXahZRKbybbFNbAlV5icth_XxXfoR7jqekomF5QSVnBybDZoUkRfOU1ZUHlSSDdNVk5DY2pwcFZ1eURzZ0Q1cHNXcjNnZV8zQkFpdWprUG1qQUZ2MTh1VWstdjFIcjRaMUlaSGRjY2swejlYSG9FcWxnWU5nIIEC'
+    # 没有找到SESSDATA，返回None
+    return None
+
+
+def require_sessdata(sessdata: Optional[str] = None) -> str:
+    """获取SESSDATA，如果没有找到则抛出异常
+
+    Args:
+        sessdata: 直接传入的SESSDATA
+
+    Returns:
+        SESSDATA字符串
+
+    Raises:
+        ValueError: 如果没有找到SESSDATA
+    """
+    result = get_sessdata(sessdata)
+    if not result:
+        raise ValueError(
+            "未找到B站SESSDATA认证信息。请通过以下方式之一提供：\n"
+            "1. 设置环境变量 BILIBILI_SESSDATA\n"
+            "2. 在项目目录创建 .env 文件并添加: BILIBILI_SESSDATA=你的值\n"
+            "3. 调用时传入 sessdata 参数"
+        )
+    return result
 
 
 def extract_bvid(url: str) -> str:
