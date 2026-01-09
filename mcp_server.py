@@ -6,8 +6,12 @@ B站字幕 MCP 服务器
 提供获取B站视频信息和字幕的工具。
 """
 
+import os
 import sys
 import io
+
+# 设置环境变量确保UTF-8编码
+os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 # 确保stdout/stderr使用UTF-8编码
 if hasattr(sys.stdout, 'reconfigure'):
