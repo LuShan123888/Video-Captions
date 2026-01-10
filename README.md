@@ -35,7 +35,7 @@ bilibili-captions https://www.bilibili.com/video/BV16HqFBZE6N medium
 ```json
 {
   "mcpServers": {
-    "bilibili": {
+    "bilibili-captions": {
       "command": "uvx",
       "args": ["bilibili-captions"],
       "env": {
@@ -52,13 +52,13 @@ bilibili-captions https://www.bilibili.com/video/BV16HqFBZE6N medium
 ```json
 {
   "mcpServers": {
-    "bilibili": {
+    "bilibili-captions": {
       "command": "uv",
       "args": [
         "run",
         "--directory",
         "/path/to/bilibili_captions",
-        "bilibili-captions"
+        "bilibili-captions-mcp"
       ],
       "env": {
         "BILIBILI_SESSDATA": "你的 SESSDATA"
