@@ -25,8 +25,10 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8')
 
 import httpx
-import torch
 from faster_whisper import WhisperModel
+
+# torch 用于 CUDA 检测
+import torch
 from opencc import OpenCC
 
 # 常量
