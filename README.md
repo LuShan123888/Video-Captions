@@ -116,17 +116,12 @@ cd bilibili_subtitle_fetcher
 # 安装依赖
 uv sync
 
-# 安装到全局（只需一次）
-uv tool install .
-
 # 设置 SESSDATA
 cp .env.example .env
 # 编辑 .env 填入 SESSDATA
 
-# 之后在任何地方都可以直接运行
-bilibili-captions <URL>
-
-# MCP 服务器也已安装，可直接使用 bilibili-captions-mcp 命令
+# 直接运行
+uv run bilibili-captions <URL>
 ```
 
 ### 测试
