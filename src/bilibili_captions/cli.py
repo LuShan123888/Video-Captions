@@ -11,7 +11,7 @@ B站字幕抓取工具 - CLI 版本
 import asyncio
 import sys
 
-from .api import (
+from .core import (
     download_subtitles_with_asr,
     get_video_info,
     require_sessdata,

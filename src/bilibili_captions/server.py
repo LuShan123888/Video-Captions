@@ -8,7 +8,7 @@ B站字幕 MCP 服务器
 
 from typing import Literal
 from mcp.server.fastmcp import FastMCP
-from .api import (
+from .core import (
     download_subtitles_with_asr,
     ResponseFormat,
     get_sessdata,

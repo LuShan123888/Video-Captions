@@ -31,7 +31,7 @@ except ImportError:
     pytest = _MockPytest()
 
 # 需要 SESSDATA 环境变量
-from bilibili_captions.api import (
+from bilibili_captions.core import (
     download_subtitles_with_asr,
     get_video_info,
     require_sessdata,
