@@ -15,7 +15,7 @@ from .api import (
 )
 
 # 初始化MCP服务器
-mcp = FastMCP("bilibili_mcp")
+mcp = FastMCP("bilibili_captions")
 
 
 # ============================================================================
@@ -24,7 +24,7 @@ mcp = FastMCP("bilibili_mcp")
 
 
 @mcp.tool()
-async def bilibili_download_subtitles(
+async def download_captions(
     url: str,
     format: Literal["text", "srt", "json"] = "text",
     model_size: Literal["base", "small", "medium", "large"] = "medium"
