@@ -468,3 +468,156 @@ async def transcribe_with_asr(
         "language_probability": info.language_probability,
         "duration": elapsed
     }
+
+
+async def download_and_extract_audio(
+    url: str,
+    output_dir: str
+) -> tuple[str, str, str]:
+    """下载B站视频并提取音频
+
+    Args:
+        url: B站视频URL
+        output_dir: 输出目录
+
+    Returns:
+        (audio_file, video_title, bvid) - 音频文件路径、视频标题、BV号
+
+    Raises:
+        subprocess.CalledProcessError: 下载或提取失败
+    """
+    import subprocess
+
+    # 获取视频信息
+    info = await get_video_info(url)
+    video_title = info.get("title", "video")
+    bvid = info.get("bvid", extract_bvid(url))
+
+    safe_title = make_safe_filename(video_title)
+    video_filename = os.path.join(output_dir, f"{safe_title}.mp4")
+    audio_filename = os.path.join(output_dir, f"{safe_title}.wav")
+
+    # 确保输出目录存在
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 如果音频已存在，直接返回
+    if os.path.exists(audio_filename):
+        return audio_filename, video_title, bvid
+
+    # 构建标准视频URL
+    if not url.startswith('http'):
+        url = f"https://www.bilibili.com/video/{bvid}"
+
+    # 使用 yt-dlp 下载视频
+    if not os.path.exists(video_filename):
+        subprocess.run(
+            ['yt-dlp', '-o', video_filename, url],
+            check=True,
+            capture_output=True
+        )
+
+    # 使用 ffmpeg 提取音频
+    subprocess.run(
+        ['ffmpeg', '-y', '-i', video_filename, '-vn',
+         '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', audio_filename],
+        check=True,
+        capture_output=True
+    )
+
+    return audio_filename, video_title, bvid
+
+
+async def download_subtitles_with_asr(
+    url: str,
+    format: ResponseFormat = ResponseFormat.TEXT,
+    model_size: str = "medium",
+    sessdata: Optional[str] = None
+) -> Dict[str, Any]:
+    """下载字幕，优先使用API，无字幕时使用ASR生成
+
+    Args:
+        url: B站视频URL
+        format: 输出格式 (text/srt/json)
+        model_size: Whisper模型大小 (base/small/medium/large)
+        sessdata: SESSDATA认证
+
+    Returns:
+        与 download_subtitle_content 相同格式，但 source 可能是 "whisper_asr"
+    """
+    # 先尝试从API获取
+    result = await download_subtitle_content(url, format, sessdata)
+
+    # 如果有错误（无字幕），使用ASR兜底
+    if "error" in result:
+        import tempfile
+        import time
+
+        # 使用临时目录
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                # 下载视频并提取音频
+                audio_file, video_title, bvid = await download_and_extract_audio(url, temp_dir)
+
+                # 使用ASR生成字幕
+                asr_result = await transcribe_with_asr(audio_file, model_size)
+
+                # 转换为请求的格式
+                segments = asr_result.get("segments", [])
+
+                if format == ResponseFormat.JSON:
+                    return {
+                        "source": "whisper_asr",
+                        "format": "json",
+                        "subtitle_count": len(segments),
+                        "subtitles": [
+                            {
+                                "from": seg["start"],
+                                "to": seg["end"],
+                                "content": seg["text"]
+                            }
+                            for seg in segments
+                        ],
+                        "video_title": video_title
+                    }
+
+                elif format == ResponseFormat.SRT:
+                    srt_content = ""
+                    for i, seg in enumerate(segments):
+                        start = seg["start"]
+                        end = seg["end"]
+                        text = seg["text"]
+
+                        start_h, start_m, start_s = int(start // 3600), int((start % 3600) // 60), start % 60
+                        end_h, end_m, end_s = int(end // 3600), int((end % 3600) // 60), end % 60
+
+                        srt_content += f"{i+1}\n"
+                        srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
+                        srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
+                        srt_content += f"\n{text}\n\n"
+
+                    return {
+                        "source": "whisper_asr",
+                        "format": "srt",
+                        "subtitle_count": len(segments),
+                        "content": srt_content,
+                        "video_title": video_title
+                    }
+
+                else:  # TEXT
+                    text_content = '\n'.join(seg["text"] for seg in segments)
+                    return {
+                        "source": "whisper_asr",
+                        "format": "text",
+                        "subtitle_count": len(segments),
+                        "content": text_content,
+                        "video_title": video_title
+                    }
+
+            except Exception as e:
+                return {
+                    "error": f"ASR生成字幕失败: {type(e).__name__}",
+                    "message": str(e),
+                    "suggestion": "请确保已安装 yt-dlp 和 ffmpeg"
+                }
+
+    return result

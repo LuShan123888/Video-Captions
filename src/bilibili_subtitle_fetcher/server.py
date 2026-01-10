@@ -11,7 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from .api import (
     get_video_info,
     list_subtitles,
-    download_subtitle_content,
+    download_subtitles_with_asr,
     ResponseFormat,
     make_safe_filename,
     get_sessdata,
@@ -94,9 +94,12 @@ async def bilibili_list_subtitles(url: str) -> dict:
 @mcp.tool()
 async def bilibili_download_subtitles(
     url: str,
-    format: Literal["text", "srt", "json"] = "text"
+    format: Literal["text", "srt", "json"] = "text",
+    model_size: Literal["base", "small", "medium", "large"] = "medium"
 ) -> dict:
     """下载B站视频字幕内容，支持多种格式。
+
+    优先从B站API获取字幕，若无字幕则使用Whisper ASR自动生成。
 
     Args:
         url: B站视频URL
@@ -104,47 +107,45 @@ async def bilibili_download_subtitles(
             - "text": 纯文本，适合阅读和总结
             - "srt": SRT字幕格式，适合视频播放
             - "json": 结构化JSON数据，适合程序处理
+        model_size: ASR模型大小（当API无字幕时使用）
+            - "base": 最快，精度较低
+            - "small": 较快
+            - "medium": 平衡（默认）
+            - "large": 最慢，精度最高
 
     Returns:
-        text格式:
+        API字幕:
         {
-            "source": str,           # "bilibili_api"
-            "format": str,           # "text"
-            "subtitle_count": int,   # 字幕条数
-            "content": str,          # 字幕文本内容
-            "video_title": str       # 视频标题
-        }
-
-        srt格式:
-        {
-            "source": str,
-            "format": "srt",
+            "source": "bilibili_api",
+            "format": str,
             "subtitle_count": int,
-            "content": str,          # SRT格式字幕
+            "content": str,          # text/srt格式
             "video_title": str
         }
 
-        json格式:
+        ASR字幕 (API无字幕时):
         {
-            "source": str,
-            "format": "json",
+            "source": "whisper_asr",
+            "format": str,
             "subtitle_count": int,
-            "subtitles": [         # 字幕数组
-                {
-                    "from": float,  # 开始时间（秒）
-                    "to": float,    # 结束时间（秒）
-                    "content": str  # 字幕内容
-                }
-            ],
+            "content": str,
             "video_title": str
+        }
+
+        错误:
+        {
+            "error": str,
+            "message": str
         }
 
     Note:
-        需要在 MCP 配置中设置 BILIBILI_SESSDATA 环境变量以获取 AI 字幕
+        - 需要在 MCP 配置中设置 BILIBILI_SESSDATA 环境变量以获取 AI 字幕
+        - ASR 兜底需要安装 yt-dlp 和 ffmpeg
+        - ASR 处理可能需要几分钟，请在 Claude Desktop 中增加超时时间
     """
     try:
         sessdata = get_sessdata()
-        return await download_subtitle_content(url, ResponseFormat(format), sessdata)
+        return await download_subtitles_with_asr(url, ResponseFormat(format), model_size, sessdata)
     except Exception as e:
         return {
             "error": f"下载字幕时发生错误: {type(e).__name__}",
