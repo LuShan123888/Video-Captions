@@ -116,15 +116,18 @@ cd bilibili_subtitle_fetcher
 # 安装依赖
 uv sync
 
+# 安装到全局（只需一次）
+uv pip install -e .
+
 # 设置 SESSDATA
 cp .env.example .env
 # 编辑 .env 填入 SESSDATA
 
-# 运行 CLI
-uv run bilibili-captions <URL>
+# 之后在任何地方都可以直接运行
+bilibili-captions <URL>
 
-# 运行 MCP 服务器
-uv run bilibili-captions-mcp
+# MCP 服务器也需要先安装到全局
+# 然后在 Claude Desktop 配置中直接使用 bilibili-captions-mcp 命令
 ```
 
 ### 测试
