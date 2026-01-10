@@ -6,7 +6,7 @@ B站字幕 MCP 服务器
 提供获取B站视频信息和字幕的工具。
 """
 
-from typing import Optional, Literal
+from typing import Literal
 from mcp.server.fastmcp import FastMCP
 from .api import (
     get_video_info,
@@ -57,15 +57,11 @@ async def bilibili_get_video_info(url: str) -> dict:
 
 
 @mcp.tool()
-async def bilibili_list_subtitles(
-    url: str,
-    sessdata: Optional[str] = None
-) -> dict:
+async def bilibili_list_subtitles(url: str) -> dict:
     """列出视频可用的字幕语言和类型。
 
     Args:
         url: B站视频URL
-        sessdata: 可选的B站SESSDATA认证token（优先使用环境变量 BILIBILI_SESSDATA）
 
     Returns:
         {
@@ -79,8 +75,12 @@ async def bilibili_list_subtitles(
             ],
             "subtitle_count": int   # 字幕数量
         }
+
+    Note:
+        需要在 MCP 配置中设置 BILIBILI_SESSDATA 环境变量以获取 AI 字幕
     """
     try:
+        sessdata = get_sessdata()
         return await list_subtitles(url, sessdata)
     except Exception as e:
         return {
@@ -94,8 +94,7 @@ async def bilibili_list_subtitles(
 @mcp.tool()
 async def bilibili_download_subtitles(
     url: str,
-    format: Literal["text", "srt", "json"] = "text",
-    sessdata: Optional[str] = None
+    format: Literal["text", "srt", "json"] = "text"
 ) -> dict:
     """下载B站视频字幕内容，支持多种格式。
 
@@ -105,7 +104,6 @@ async def bilibili_download_subtitles(
             - "text": 纯文本，适合阅读和总结
             - "srt": SRT字幕格式，适合视频播放
             - "json": 结构化JSON数据，适合程序处理
-        sessdata: 可选的B站SESSDATA认证token（优先使用环境变量 BILIBILI_SESSDATA）
 
     Returns:
         text格式:
@@ -140,8 +138,12 @@ async def bilibili_download_subtitles(
             ],
             "video_title": str
         }
+
+    Note:
+        需要在 MCP 配置中设置 BILIBILI_SESSDATA 环境变量以获取 AI 字幕
     """
     try:
+        sessdata = get_sessdata()
         return await download_subtitle_content(url, ResponseFormat(format), sessdata)
     except Exception as e:
         return {
