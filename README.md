@@ -122,9 +122,57 @@ uv sync
 # 设置 SESSDATA
 cp .env.example .env
 # 编辑 .env 填入 SESSDATA
+```
 
-# 直接运行
-uv run bilibili-captions <URL>
+#### CLI 运行
+
+```bash
+# 方式1: uv run（推荐开发环境）
+uv run bilibili-captions BV16YC3BrEDz
+uv run bilibili-captions https://www.bilibili.com/video/BV1qViQBwELr small
+
+# 方式2: 直接调用模块
+uv run python -m bilibili_captions.cli <URL>
+
+# 方式3: 安装后全局使用
+uv tool install -e .
+bilibili-captions <URL>
+```
+
+#### MCP 服务器
+
+在 Claude Desktop 的 `claude_desktop_config.json` 中添加本地开发配置：
+
+```json
+{
+  "mcpServers": {
+    "bilibili-captions-dev": {
+      "command": "uv",
+      "args": ["--directory", "/Users/cian/Code/bilibili-captions", "run", "bilibili-captions-mcp"],
+      "env": {
+        "BILIBILI_SESSDATA": "你的 SESSDATA"
+      },
+      "timeout": 600000
+    }
+  }
+}
+```
+
+安装后使用的生产配置：
+
+```json
+{
+  "mcpServers": {
+    "bilibili-captions": {
+      "command": "uvx",
+      "args": ["bilibili-captions-mcp"],
+      "env": {
+        "BILIBILI_SESSDATA": "你的 SESSDATA"
+      },
+      "timeout": 600000
+    }
+  }
+}
 ```
 
 ### 测试

@@ -570,9 +570,8 @@ async def download_and_extract_audio(
     if os.path.exists(audio_filename):
         return audio_filename, video_title, bvid
 
-    # 构建标准视频URL
-    if not url.startswith('http'):
-        url = f"https://www.bilibili.com/video/{bvid}"
+    # 始终构建标准视频URL（yt-dlp 不支持稍后观看等特殊URL）
+    url = f"https://www.bilibili.com/video/{bvid}"
 
     # 使用 yt-dlp 下载视频
     if not os.path.exists(video_filename):
@@ -683,11 +682,39 @@ async def download_subtitles_with_asr(
                         "video_title": video_title
                     }
 
+            except subprocess.CalledProcessError as e:
+                # 解析错误输出以获取更具体的信息
+                stderr = e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''
+                suggestion = "请检查网络连接和视频可访问性"
+
+                if 'command not found' in stderr.lower() or 'not found' in stderr.lower():
+                    suggestion = "请确保已安装 yt-dlp: brew install yt-dlp"
+                elif 'ffmpeg' in stderr.lower():
+                    suggestion = "请确保已安装 ffmpeg: brew install ffmpeg"
+                elif 'sign' in stderr.lower() or 'login' in stderr.lower() or 'access' in stderr.lower():
+                    suggestion = "该视频可能需要登录或为会员专享，请设置 SESSDATA"
+                elif 'unsupported' in stderr.lower() or 'no video' in stderr.lower():
+                    suggestion = "该视频格式不支持或无法访问"
+                elif 'http' in stderr.lower():
+                    suggestion = "网络请求失败，请检查网络连接或稍后重试"
+
+                return {
+                    "error": f"ASR生成字幕失败: {type(e).__name__}",
+                    "message": str(e),
+                    "stderr": stderr[:200] if stderr else None,
+                    "suggestion": suggestion
+                }
+            except FileNotFoundError:
+                return {
+                    "error": "ASR生成字幕失败: FileNotFoundError",
+                    "message": "未找到必要的命令行工具",
+                    "suggestion": "请安装 yt-dlp 和 ffmpeg: brew install yt-dlp ffmpeg"
+                }
             except Exception as e:
                 return {
                     "error": f"ASR生成字幕失败: {type(e).__name__}",
                     "message": str(e),
-                    "suggestion": "请确保已安装 yt-dlp 和 ffmpeg"
+                    "suggestion": f"请确保已安装 yt-dlp 和 ffmpeg，且视频可正常访问"
                 }
 
     return result
