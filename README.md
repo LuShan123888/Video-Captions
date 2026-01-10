@@ -1,16 +1,20 @@
 # Bilibili-Captions
 
+[简体中文](#简体中文) | [English](#english)
+
+---
+
+## 简体中文
+
 B站字幕下载工具，支持 API 获取和 Whisper ASR 自动生成。
 
-## 功能特性
+### 功能特性
 
 - 🎬 **API 下载** - 直接从 B站 API 获取视频字幕
 - 🤖 **ASR 生成** - 无字幕时自动使用 Whisper 生成
 - 🌏 **繁简转换** - 自动转换为简体中文
 - 📦 **MCP 服务器** - 集成到 Claude Desktop
 - 🧪 **完整测试** - 包含真实视频测试用例
-
----
 
 ## 使用
 
@@ -90,8 +94,6 @@ bilibili-captions "【我们拍到了，中国自己的可回收火箭。】 htt
 }
 ```
 
----
-
 ## 开发
 
 ### 项目结构
@@ -160,23 +162,6 @@ bilibili-captions <URL>
 }
 ```
 
-安装后使用的生产配置：
-
-```json
-{
-  "mcpServers": {
-    "bilibili-captions": {
-      "command": "uvx",
-      "args": ["bilibili-captions-mcp"],
-      "env": {
-        "BILIBILI_SESSDATA": "你的 SESSDATA"
-      },
-      "timeout": 600000
-    }
-  }
-}
-```
-
 ### 测试
 
 项目包含两个真实视频的测试用例：
@@ -191,8 +176,6 @@ uv run python tests/test_videos.py
 # 或
 pytest tests/test_videos.py
 ```
-
----
 
 ## 配置
 
@@ -236,5 +219,225 @@ apt install yt-dlp ffmpeg
 ```
 
 ## 许可证
+
+MIT
+
+---
+
+## English
+
+A Bilibili subtitle download tool that supports API fetching and Whisper ASR generation.
+
+### Features
+
+- 🎬 **API Download** - Fetch video subtitles directly from Bilibili API
+- 🤖 **ASR Generation** - Automatically generate subtitles with Whisper when none exist
+- 🌏 **Conversion** - Automatically convert Traditional Chinese to Simplified Chinese
+- 📦 **MCP Server** - Integrate with Claude Desktop
+- 🧪 **Tested** - Includes real video test cases
+
+## Usage
+
+### Installation
+
+**System Requirement:** Python >=3.10
+
+```bash
+# Install using uv tool (recommended)
+uv tool install bilibili-captions
+
+# Or using pip
+pip install bilibili-captions
+```
+
+### Running
+
+```bash
+# 1. Set SESSDATA environment variable
+export BILIBILI_SESSDATA="your_value"
+
+# 2. Run command
+bilibili-captions <BV_ID_or_URL> [model_size]
+
+# Examples - supports multiple URL formats
+bilibili-captions BV16YC3BrEDz                                    # Direct BV ID
+bilibili-captions https://www.bilibili.com/video/BV1qViQBwELr   # Full URL
+bilibili-captions https://www.bilibili.com/list/watchlater/?bvid=BV16HqFBZE6N  # Watch later
+bilibili-captions "【Title】 https://www.bilibili.com/video/BV1y7qwBuEBw/?share_source=copy_web&vd_source=xxx"  # Share copy
+```
+
+**Model size options:**
+- `base` - Fastest, lower accuracy
+- `small` - Faster
+- `medium` - Balanced (default)
+- `large` - Slowest, highest accuracy
+
+### MCP Server
+
+Configure in Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bilibili-captions": {
+      "command": "uvx",
+      "args": ["bilibili-captions-mcp"],
+      "env": {
+        "BILIBILI_SESSDATA": "your_SESSDATA"
+      },
+      "timeout": 600000
+    }
+  }
+}
+```
+
+### MCP Tools
+
+#### download_captions
+
+Download Bilibili video subtitles in multiple formats.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `url` | Required | Bilibili video URL or BV ID |
+| `format` | Optional | `text`(default) / `srt` / `json` |
+| `model_size` | Optional | `base` / `small` / `medium`(default) / `large` |
+
+**Response example:**
+```json
+{
+  "source": "bilibili_api",
+  "format": "text",
+  "subtitle_count": 189,
+  "content": "subtitle content...",
+  "video_title": "video title"
+}
+```
+
+## Development
+
+### Project Structure
+
+```
+Bilibili-Captions/
+├── src/bilibili_captions/
+│   ├── __init__.py
+│   ├── core.py      # Core API functionality
+│   ├── cli.py       # CLI entry point
+│   └── server.py    # MCP server
+├── tests/
+│   ├── __init__.py
+│   └── test_videos.py    # Test cases
+├── .env.example          # Configuration example
+├── pyproject.toml
+└── README.md
+```
+
+### Local Development
+
+```bash
+# Clone repository
+git clone https://github.com/LuShan123888/Bilibili-Captions.git
+cd Bilibili-Captions
+
+# Install dependencies
+uv sync
+
+# Set SESSDATA
+cp .env.example .env
+# Edit .env and fill in SESSDATA
+```
+
+#### CLI
+
+```bash
+# Method 1: uv run (recommended for development)
+uv run bilibili-captions BV16YC3BrEDz
+uv run bilibili-captions https://www.bilibili.com/video/BV1qViQBwELr small
+
+# Method 2: Direct module call
+uv run python -m bilibili_captions.cli <URL>
+
+# Method 3: Global use after installation
+uv tool install -e .
+bilibili-captions <URL>
+```
+
+#### MCP Server (Development)
+
+Add local development config in Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bilibili-captions-dev": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/Bilibili-Captions", "run", "bilibili-captions-mcp"],
+      "env": {
+        "BILIBILI_SESSDATA": "your_SESSDATA"
+      },
+      "timeout": 600000
+    }
+  }
+}
+```
+
+### Testing
+
+The project includes test cases for two real videos:
+
+| Video | Scenario | Expected Result |
+|-------|----------|-----------------|
+| BV16YC3BrEDz | Has API subtitles | 189 entries, source `bilibili_api` |
+| BV1qViQBwELr | No subtitles ASR | 30 entries, source `whisper_asr` |
+
+```bash
+uv run python tests/test_videos.py
+# or
+pytest tests/test_videos.py
+```
+
+## Configuration
+
+### Get SESSDATA
+
+1. Login to [Bilibili](https://www.bilibili.com/)
+2. F12 → Application → Cookies → `SESSDATA`
+3. Copy value to environment variable or `.env` file
+
+```bash
+# Method 1: Environment variable
+export BILIBILI_SESSDATA="your_value"
+
+# Method 2: .env file
+cp .env.example .env
+# Edit .env and fill in SESSDATA
+```
+
+## Dependencies
+
+### Python Dependencies
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| `mcp` | >=1.0.0 | MCP protocol support |
+| `httpx` | >=0.28.1 | HTTP client |
+| `requests` | >=2.32.5 | HTTP requests |
+| `faster-whisper` | >=1.0.0 | Speech recognition (recommended) |
+| `openai-whisper` | - | Speech recognition alternative |
+| `opencc-python-reimplemented` | >=0.1.7 | Traditional/Simplified conversion |
+| `filelock` | >=3.20.0 | File locking |
+
+### System Dependencies
+
+```bash
+# macOS
+brew install yt-dlp ffmpeg
+
+# Linux
+apt install yt-dlp ffmpeg
+```
+
+## License
 
 MIT
