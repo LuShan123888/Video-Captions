@@ -16,6 +16,8 @@ B站字幕下载工具，支持 API 获取和 Whisper ASR 自动生成。
 
 ### 安装
 
+**系统要求：** Python >=3.10
+
 ```bash
 # 使用 uv tool 安装（推荐）
 uv tool install bilibili-captions
@@ -95,7 +97,7 @@ bilibili-captions "【我们拍到了，中国自己的可回收火箭。】 htt
 ### 项目结构
 
 ```
-bilibili-captions/
+Bilibili-Captions/
 ├── src/bilibili_captions/
 │   ├── __init__.py
 │   ├── core.py      # 核心 API 功能
@@ -113,8 +115,8 @@ bilibili-captions/
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/bilibili-captions.git
-cd bilibili-captions
+git clone https://github.com/LuShan123888/Bilibili-Captions.git
+cd Bilibili-Captions
 
 # 安装依赖
 uv sync
@@ -148,7 +150,7 @@ bilibili-captions <URL>
   "mcpServers": {
     "bilibili-captions-dev": {
       "command": "uv",
-      "args": ["--directory", "/Users/cian/Code/bilibili-captions", "run", "bilibili-captions-mcp"],
+      "args": ["--directory", "/Users/cian/Code/Bilibili-Captions", "run", "bilibili-captions-mcp"],
       "env": {
         "BILIBILI_SESSDATA": "你的 SESSDATA"
       },
@@ -211,14 +213,17 @@ cp .env.example .env
 
 ## 依赖
 
-| 依赖 | 用途 |
-|------|------|
-| `httpx` | HTTP 客户端 |
-| `faster-whisper` | 语音识别（推荐） |
-| `openai-whisper` | 语音识别备选 |
-| `opencc-python-reimplemented` | 繁简转换 |
-| `yt-dlp` | 视频下载（系统） |
-| `ffmpeg` | 音频提取（系统） |
+### Python 依赖
+
+| 依赖 | 版本 | 用途 |
+|------|------|------|
+| `mcp` | >=1.0.0 | MCP 协议支持 |
+| `httpx` | >=0.28.1 | HTTP 客户端 |
+| `requests` | >=2.32.5 | HTTP 请求 |
+| `faster-whisper` | >=1.0.0 | 语音识别（推荐） |
+| `openai-whisper` | - | 语音识别备选 |
+| `opencc-python-reimplemented` | >=0.1.7 | 繁简转换 |
+| `filelock` | >=3.20.0 | 文件锁定 |
 
 ### 系统依赖
 
