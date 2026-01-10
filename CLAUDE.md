@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-**bilibili-captions** - B站字幕下载工具
+**Bilibili-Captions** - B站字幕下载工具
 
 - 从 B站 API 直接获取字幕
 - 无字幕时使用 Whisper ASR 自动生成

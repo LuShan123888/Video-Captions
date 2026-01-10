@@ -1,4 +1,4 @@
-# bilibili-captions
+# Bilibili-Captions
 
 B站字幕下载工具，支持 API 获取和 Whisper ASR 自动生成。
 
