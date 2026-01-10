@@ -1,54 +1,61 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文件为 Claude Code 提供项目指导。
 
 ## 项目概述
 
-B站字幕抓取工具 - 一个Python脚本，用于从B站视频下载字幕。如果视频没有自带字幕，会使用Whisper ASR自动生成。
+**bilibili-captions** - B站字幕下载工具
+
+- 从 B站 API 直接获取字幕
+- 无字幕时使用 Whisper ASR 自动生成
+- 自动繁简转换
+- 提供 CLI 和 MCP 两种使用方式
+
+## 项目结构
+
+```
+src/bilibili_captions/
+├── core.py      # 核心功能（API 调用、ASR、繁简转换）
+├── cli.py       # CLI 入口
+└── server.py    # MCP 服务器
+```
 
 ## 常用命令
 
 ```bash
 # 安装依赖
-python -m pip install -e .
-
-# 或使用 uv (如果已安装)
 uv sync
 
-# 运行程序
-python main.py <B站视频URL>
+# 运行 CLI
+uv run bilibili-captions <URL>
 
-# 示例
-python main.py https://www.bilibili.com/video/BV1xx411c7mD/
+# 运行 MCP 服务器
+uv run bilibili-captions-mcp
+
+# 运行测试
+uv run python tests/test_videos.py
 ```
+
+## 核心模块 (core.py)
+
+| 函数 | 说明 |
+|------|------|
+| `get_video_info(url)` | 获取视频信息 |
+| `download_subtitle_content(url, format)` | API 下载字幕 |
+| `transcribe_with_asr(audio_file, model_size)` | Whisper 转录 |
+| `download_subtitles_with_asr(url, format, model_size)` | API 优先，ASR 兜底 |
+| `convert_to_simplified(text)` | 繁体转简体 |
 
 ## 外部依赖
 
-程序依赖以下外部工具，需单独安装：
-- **yt-dlp**: 用于下载B站视频 (`pip install yt-dlp` 或系统包管理器)
-- **ffmpeg**: 用于从视频中提取音频 (系统包管理器安装)
+- **yt-dlp**: 下载 B站视频
+- **ffmpeg**: 提取音频
+- **faster-whisper**: ASR 语音识别（推荐）
+- **openai-whisper**: ASR 备选方案
 
-## 代码架构
+## 测试视频
 
-### 核心流程 (`main.py`)
-
-1. `get_video_info(url)` - 获取视频标题、CID和BV号
-2. `get_subtitles_from_bilibili()` - 尝试从B站API下载现有字幕
-3. `generate_subtitles_with_asr()` - 如无字幕，使用Whisper生成
-
-### 字幕格式
-
-- 输出格式为 **SRT** 格式
-- 下载的字幕保存为 `{视频标题}.srt`
-- ASR生成的字幕保存为 `{视频标题}_asr.srt`
-- ASR生成的字幕会**自动转换为简体中文**（使用 opencc）
-
-### B站API使用
-
-- 视频信息: `https://api.bilibili.com/x/web-interface/view?bvid={bvid}`
-- 字幕列表: `https://api.bilibili.com/x/player/v2?cid={cid}&bvid={bvid}`
-- 字幕内容: 从 `subtitle_url` 获取JSON格式，需转换为SRT
-
-### 时间格式转换
-
-B站API使用秒数（浮点），SRT格式需要 `HH:MM:SS,mmm` 格式。
+| 视频 | 用途 |
+|------|------|
+| BV16YC3BrEDz | 有 API 字幕 |
+| BV1qViQBwELr | 无字幕（测试 ASR 兜底） |
