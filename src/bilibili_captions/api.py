@@ -453,14 +453,16 @@ async def _transcribe_with_faster_whisper(
 ) -> Dict[str, Any]:
     """使用 faster-whisper 进行转录"""
     import torch
+    import time
 
-    # 检测设备
-    if torch.cuda.is_available():
-        device = "cuda"
-        compute_type = "float16"
-    else:
-        device = "cpu"
-        compute_type = "int8"
+    # 检测设备（兼容 CPU-only torch）
+    try:
+        has_cuda = torch.cuda.is_available()
+    except AttributeError:
+        has_cuda = False
+
+    device = "cuda" if has_cuda else "cpu"
+    compute_type = "float16" if has_cuda else "int8"
 
     model = WhisperModel(
         model_size,
@@ -507,8 +509,11 @@ async def _transcribe_with_openai_whisper(
     """使用 openai-whisper 进行转录"""
     import torch
 
-    # 检测设备
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # 检测设备（兼容 CPU-only torch）
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    except AttributeError:
+        device = "cpu"
 
     model = whisper.load_model(model_size, device=device)
     result = model.transcribe(audio_file, language='zh', task='transcribe')
