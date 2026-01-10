@@ -393,6 +393,12 @@ except ImportError:
     FASTER_WHISPER_AVAILABLE = False
 
 try:
+    import whisper
+    OPENAI_WHISPER_AVAILABLE = True
+except ImportError:
+    OPENAI_WHISPER_AVAILABLE = False
+
+try:
     from opencc import OpenCC
     OPENCC_AVAILABLE = True
 except ImportError:
@@ -416,6 +422,8 @@ async def transcribe_with_asr(
 ) -> Dict[str, Any]:
     """使用Whisper ASR生成字幕
 
+    优先使用 faster-whisper（速度更快），若不可用则降级到 openai-whisper。
+
     Args:
         audio_file: 音频文件路径
         model_size: 模型大小 (base/small/medium/large)
@@ -428,10 +436,22 @@ async def transcribe_with_asr(
             "duration": 180.5
         }
     """
-    if not FASTER_WHISPER_AVAILABLE:
-        raise ValueError("faster-whisper 未安装，请使用: pip install faster-whisper")
+    if not FASTER_WHISPER_AVAILABLE and not OPENAI_WHISPER_AVAILABLE:
+        raise ValueError("未安装 Whisper 库。请使用: pip install faster-whisper")
 
     import time
+
+    if FASTER_WHISPER_AVAILABLE:
+        return await _transcribe_with_faster_whisper(audio_file, model_size)
+    else:
+        return await _transcribe_with_openai_whisper(audio_file, model_size)
+
+
+async def _transcribe_with_faster_whisper(
+    audio_file: str,
+    model_size: str
+) -> Dict[str, Any]:
+    """使用 faster-whisper 进行转录"""
     import torch
 
     # 检测设备
@@ -477,6 +497,37 @@ async def transcribe_with_asr(
         "language": info.language,
         "language_probability": info.language_probability,
         "duration": elapsed
+    }
+
+
+async def _transcribe_with_openai_whisper(
+    audio_file: str,
+    model_size: str
+) -> Dict[str, Any]:
+    """使用 openai-whisper 进行转录"""
+    import torch
+
+    # 检测设备
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model = whisper.load_model(model_size, device=device)
+    result = model.transcribe(audio_file, language='zh', task='transcribe')
+
+    # 转换为统一格式
+    segment_list = []
+    for seg in result['segments']:
+        segment_list.append({
+            "start": seg['start'],
+            "end": seg['end'],
+            "text": seg['text'].strip()
+        })
+
+    return {
+        "source": "whisper_asr",
+        "segments": segment_list,
+        "text": result['text'],
+        "language": result.get('language', 'zh'),
+        "duration": result.get('duration', 0)
     }
 
 
