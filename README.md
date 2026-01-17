@@ -49,8 +49,9 @@ bilibili-captions "【我们拍到了，中国自己的可回收火箭。】 htt
 **模型大小选项：**
 - `base` - 最快，精度较低
 - `small` - 较快
-- `medium` - 平衡（默认）
-- `large` - 最慢，精度最高
+- `medium` - 平衡
+- `large` - 同 large-v3
+- `large-v3` - 精度最高（默认，mlx-whisper 优化）
 
 ### MCP 服务器
 
@@ -81,7 +82,7 @@ bilibili-captions "【我们拍到了，中国自己的可回收火箭。】 htt
 |------|------|------|
 | `url` | 必需 | B站视频URL或BV号 |
 | `format` | 可选 | `text`(默认) / `srt` / `json` |
-| `model_size` | 可选 | `base` / `small` / `medium`(默认) / `large` |
+| `model_size` | 可选 | `base` / `small` / `medium` / `large` / `large-v3`(默认) |
 
 **返回示例：**
 ```json
@@ -203,19 +204,17 @@ cp .env.example .env
 | `mcp` | >=1.0.0 | MCP 协议支持 |
 | `httpx` | >=0.28.1 | HTTP 客户端 |
 | `requests` | >=2.32.5 | HTTP 请求 |
-| `faster-whisper` | >=1.0.0 | 语音识别（推荐） |
-| `openai-whisper` | - | 语音识别备选 |
+| `mlx-whisper` | >=0.4.0 | 语音识别（Apple Silicon 优化） |
 | `opencc-python-reimplemented` | >=0.1.7 | 繁简转换 |
 | `filelock` | >=3.20.0 | 文件锁定 |
+
+> **注意：** ASR 功能使用 mlx-whisper，仅支持 Apple Silicon (M1/M2/M3/M4) Mac。
 
 ### 系统依赖
 
 ```bash
-# macOS
+# macOS (Apple Silicon)
 brew install yt-dlp ffmpeg
-
-# Linux
-apt install yt-dlp ffmpeg
 ```
 
 ## 许可证
@@ -269,8 +268,9 @@ bilibili-captions "【Title】 https://www.bilibili.com/video/BV1y7qwBuEBw/?shar
 **Model size options:**
 - `base` - Fastest, lower accuracy
 - `small` - Faster
-- `medium` - Balanced (default)
-- `large` - Slowest, highest accuracy
+- `medium` - Balanced
+- `large` - Same as large-v3
+- `large-v3` - Highest accuracy (default, mlx-whisper optimized)
 
 ### MCP Server
 
@@ -301,7 +301,7 @@ Download Bilibili video subtitles in multiple formats.
 |-----------|------|-------------|
 | `url` | Required | Bilibili video URL or BV ID |
 | `format` | Optional | `text`(default) / `srt` / `json` |
-| `model_size` | Optional | `base` / `small` / `medium`(default) / `large` |
+| `model_size` | Optional | `base` / `small` / `medium` / `large` / `large-v3`(default) |
 
 **Response example:**
 ```json
@@ -423,19 +423,17 @@ cp .env.example .env
 | `mcp` | >=1.0.0 | MCP protocol support |
 | `httpx` | >=0.28.1 | HTTP client |
 | `requests` | >=2.32.5 | HTTP requests |
-| `faster-whisper` | >=1.0.0 | Speech recognition (recommended) |
-| `openai-whisper` | - | Speech recognition alternative |
+| `mlx-whisper` | >=0.4.0 | Speech recognition (Apple Silicon optimized) |
 | `opencc-python-reimplemented` | >=0.1.7 | Traditional/Simplified conversion |
 | `filelock` | >=3.20.0 | File locking |
+
+> **Note:** ASR uses mlx-whisper, which only supports Apple Silicon (M1/M2/M3/M4) Macs.
 
 ### System Dependencies
 
 ```bash
-# macOS
+# macOS (Apple Silicon)
 brew install yt-dlp ffmpeg
-
-# Linux
-apt install yt-dlp ffmpeg
 ```
 
 ## License

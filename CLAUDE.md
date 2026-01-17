@@ -52,8 +52,7 @@ uv run python tests/test_videos.py
 
 - **yt-dlp**: 下载 B站视频
 - **ffmpeg**: 提取音频
-- **faster-whisper**: ASR 语音识别（推荐）
-- **openai-whisper**: ASR 备选方案
+- **mlx-whisper**: ASR 语音识别（Apple Silicon 优化）
 
 ## 测试视频
 
