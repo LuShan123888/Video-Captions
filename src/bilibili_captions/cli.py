@@ -30,24 +30,7 @@ def print_result(result: dict) -> None:
             print(f"提示: {result['suggestion']}")
         return None
 
-    video_title = result.get("video_title", "未知")
-    source = result.get("source", "unknown")
-    source_label = "B站AI字幕 (API直接获取)" if source == "bilibili_api" else "Whisper ASR语音识别 (AI生成)"
     subtitle_count = result.get("subtitle_count", 0)
-
-    print(f"\n{'='*60}")
-    print(f"字幕来源: {source_label}")
-    print(f"视频标题: {video_title}")
-    print(f"{'='*60}")
-
-    if "content" in result:
-        print(result["content"])
-    elif "subtitles" in result:
-        # JSON 格式
-        for item in result["subtitles"]:
-            print(item.get("content", ""))
-
-    print(f"{'='*60}")
     print(f"\n共 {subtitle_count} 条字幕")
     return None
 
@@ -68,8 +51,6 @@ def main() -> None:
         print(f"警告: 无效的模型大小 '{model_size}'，使用默认 'large-v3' 模型")
         model_size = "large-v3"
 
-    print(f"使用模型: {model_size}")
-
     # 检查 SESSDATA
     try:
         require_sessdata()
@@ -77,10 +58,19 @@ def main() -> None:
         print(f"错误: {e}")
         sys.exit(1)
 
-    # 获取视频信息
+    # 获取视频信息并显示头部
     try:
         info = asyncio.run(get_video_info(video_url))
-        print(f"视频标题: {info.get('title')}")
+        video_title = info.get('title', '未知')
+
+        # 显示字幕来源（先用 API 尝试，失败则用 ASR）
+        has_subtitle = info.get('has_subtitle', False)
+        source_label = "B站AI字幕 (API直接获取)" if has_subtitle else "Whisper ASR语音识别 (AI生成，如无API字幕)"
+
+        print(f"{'='*60}")
+        print(f"视频标题: {video_title}")
+        print(f"字幕来源: {source_label}")
+        print(f"{'='*60}\n")
     except Exception as e:
         print(f"错误: 无法获取视频信息 - {e}")
         sys.exit(1)
