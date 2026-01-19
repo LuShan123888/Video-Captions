@@ -255,9 +255,9 @@ async def list_subtitles(url: str, sessdata: Optional[str] = None) -> Dict[str, 
 
 
 async def download_subtitle_content(
-    url: str,
-    format: ResponseFormat = ResponseFormat.TEXT,
-    sessdata: Optional[str] = None
+        url: str,
+        format: ResponseFormat = ResponseFormat.TEXT,
+        sessdata: Optional[str] = None
 ) -> Dict[str, Any]:
     """下载视频字幕内容
 
@@ -339,7 +339,7 @@ async def download_subtitle_content(
                 start_h, start_m, start_s = int(start_time // 3600), int((start_time % 3600) // 60), start_time % 60
                 end_h, end_m, end_s = int(end_time // 3600), int((end_time % 3600) // 60), end_time % 60
 
-                srt_content += f"{i+1}\n"
+                srt_content += f"{i + 1}\n"
                 srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
                 srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
                 srt_content += f"\n{content}\n\n"
@@ -397,9 +397,9 @@ def convert_to_simplified(text: str) -> str:
 
 
 async def transcribe_with_asr(
-    audio_file: str,
-    model_size: str = "large-v3",
-    show_progress: bool = True
+        audio_file: str,
+        model_size: str = "large-v3",
+        show_progress: bool = True
 ) -> Dict[str, Any]:
     """使用Whisper ASR生成字幕
 
@@ -472,9 +472,9 @@ async def transcribe_with_asr(
 
 
 async def download_and_extract_audio(
-    url: str,
-    output_dir: str,
-    show_progress: bool = True
+        url: str,
+        output_dir: str,
+        show_progress: bool = True
 ) -> tuple[str, str, str]:
     """下载B站视频并提取音频
 
@@ -532,11 +532,11 @@ async def download_and_extract_audio(
 
 
 async def download_subtitles_with_asr(
-    url: str,
-    format: ResponseFormat = ResponseFormat.TEXT,
-    model_size: str = "medium",
-    sessdata: Optional[str] = None,
-    show_progress: bool = True
+        url: str,
+        format: ResponseFormat = ResponseFormat.TEXT,
+        model_size: str = "medium",
+        sessdata: Optional[str] = None,
+        show_progress: bool = True
 ) -> Dict[str, Any]:
     """下载字幕，优先使用API，无字幕时使用ASR生成
 
@@ -595,7 +595,7 @@ async def download_subtitles_with_asr(
                         start_h, start_m, start_s = int(start // 3600), int((start % 3600) // 60), start % 60
                         end_h, end_m, end_s = int(end // 3600), int((end % 3600) // 60), end % 60
 
-                        srt_content += f"{i+1}\n"
+                        srt_content += f"{i + 1}\n"
                         srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
                         srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
                         srt_content += f"\n{text}\n\n"

@@ -207,6 +207,8 @@ cp .env.example .env
 | `mlx-whisper` | >=0.4.0 | 语音识别（Apple Silicon 优化） |
 | `opencc-python-reimplemented` | >=0.1.7 | 繁简转换 |
 | `filelock` | >=3.20.0 | 文件锁定 |
+| `tqdm` | >=4.66.0 | 进度条显示 |
+| `urllib3` | >=2.6.0 | URL 处理 |
 
 > **注意：** ASR 功能使用 mlx-whisper，仅支持 Apple Silicon (M1/M2/M3/M4) Mac。
 
@@ -426,6 +428,8 @@ cp .env.example .env
 | `mlx-whisper` | >=0.4.0 | Speech recognition (Apple Silicon optimized) |
 | `opencc-python-reimplemented` | >=0.1.7 | Traditional/Simplified conversion |
 | `filelock` | >=3.20.0 | File locking |
+| `tqdm` | >=4.66.0 | Progress bar |
+| `urllib3` | >=2.6.0 | URL handling |
 
 > **Note:** ASR uses mlx-whisper, which only supports Apple Silicon (M1/M2/M3/M4) Macs.
 

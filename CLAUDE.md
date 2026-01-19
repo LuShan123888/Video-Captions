@@ -43,7 +43,9 @@ uv run python tests/test_videos.py
 | 函数 | 说明 |
 |------|------|
 | `get_video_info(url)` | 获取视频信息 |
+| `list_subtitles(url)` | 列出可用字幕 |
 | `download_subtitle_content(url, format)` | API 下载字幕 |
+| `download_and_extract_audio(url, output_dir)` | 下载视频并提取音频 |
 | `transcribe_with_asr(audio_file, model_size)` | Whisper 转录 |
 | `download_subtitles_with_asr(url, format, model_size)` | API 优先，ASR 兜底 |
 | `convert_to_simplified(text)` | 繁体转简体 |
