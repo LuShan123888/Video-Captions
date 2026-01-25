@@ -41,7 +41,7 @@ wheels = [
 
 [[package]]
 name = "bilibili-captions"
-version = "0.1.20260117.3"
+version = "0.1.20260119.1"
 source = { editable = "." }
 dependencies = [
     { name = "filelock" },
