@@ -531,6 +531,181 @@ async def download_and_extract_audio(
     return audio_filename, video_title, bvid
 
 
+def is_video_file(file_path: str) -> bool:
+    """判断文件是否为视频格式"""
+    video_extensions = {'.mp4', '.avi', '.mkv', '.mov', '.flv', '.wmv', '.webm', '.m4v', '.mpg', '.mpeg'}
+    return os.path.splitext(file_path)[1].lower() in video_extensions
+
+
+def is_audio_file(file_path: str) -> bool:
+    """判断文件是否为音频格式"""
+    audio_extensions = {'.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.wma', '.opus'}
+    return os.path.splitext(file_path)[1].lower() in audio_extensions
+
+
+async def extract_audio_from_video(
+        video_file: str,
+        output_dir: str,
+        show_progress: bool = True
+) -> str:
+    """从视频文件中提取音频
+
+    Args:
+        video_file: 视频文件路径
+        output_dir: 输出目录
+        show_progress: 是否显示进度提示
+
+    Returns:
+        音频文件路径
+    """
+    base_name = os.path.splitext(os.path.basename(video_file))[0]
+    audio_filename = os.path.join(output_dir, f"{base_name}.wav")
+
+    # 如果音频已存在，直接返回
+    if os.path.exists(audio_filename):
+        return audio_filename
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    if show_progress:
+        print("正在从视频提取音频...")
+
+    subprocess.run(
+        ['ffmpeg', '-y', '-i', video_file, '-vn',
+         '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', audio_filename],
+        check=True,
+        capture_output=True
+    )
+
+    return audio_filename
+
+
+async def transcribe_file_with_asr(
+        file_path: str,
+        format: ResponseFormat = ResponseFormat.TEXT,
+        model_size: str = "medium",
+        show_progress: bool = True
+) -> Dict[str, Any]:
+    """对本地音频/视频文件进行 ASR 转录
+
+    Args:
+        file_path: 本地文件路径（支持音频和视频格式）
+        format: 输出格式 (text/srt/json)
+        model_size: Whisper模型大小 (base/small/medium/large/large-v3)
+        show_progress: 是否显示进度条
+
+    Returns:
+        {
+            "source": "whisper_asr",
+            "format": str,
+            "subtitle_count": int,
+            "content": str,  # text/srt格式
+            "video_title": str  # 文件名
+        }
+    """
+    if not os.path.exists(file_path):
+        return {
+            "error": "文件不存在",
+            "message": f"文件不存在: {file_path}"
+        }
+
+    file_title = os.path.splitext(os.path.basename(file_path))[0]
+
+    try:
+        # 如果是视频文件，先提取音频
+        if is_video_file(file_path):
+            with tempfile.TemporaryDirectory() as temp_dir:
+                audio_file = await extract_audio_from_video(file_path, temp_dir, show_progress)
+                asr_result = await transcribe_with_asr(audio_file, model_size, show_progress)
+        # 如果是音频文件，直接使用
+        elif is_audio_file(file_path):
+            audio_file = file_path
+            asr_result = await transcribe_with_asr(audio_file, model_size, show_progress)
+        else:
+            return {
+                "error": "不支持的文件格式",
+                "message": f"不支持的文件格式: {os.path.splitext(file_path)[1]}",
+                "suggestion": "支持的音频格式: mp3, wav, m4a, aac, flac, ogg, wma, opus"
+                            "支持的视频格式: mp4, avi, mkv, mov, flv, wmv, webm, m4v, mpg, mpeg"
+            }
+
+        # 转换为请求的格式
+        segments = asr_result.get("segments", [])
+
+        if format == ResponseFormat.JSON:
+            return {
+                "source": "whisper_asr",
+                "format": "json",
+                "subtitle_count": len(segments),
+                "subtitles": [
+                    {
+                        "from": seg["start"],
+                        "to": seg["end"],
+                        "content": convert_to_simplified(seg["text"])
+                    }
+                    for seg in segments
+                ],
+                "video_title": file_title
+            }
+
+        elif format == ResponseFormat.SRT:
+            srt_content = ""
+            for i, seg in enumerate(segments):
+                start = seg["start"]
+                end = seg["end"]
+                text = seg["text"]
+
+                start_h, start_m, start_s = int(start // 3600), int((start % 3600) // 60), start % 60
+                end_h, end_m, end_s = int(end // 3600), int((end % 3600) // 60), end % 60
+
+                srt_content += f"{i + 1}\n"
+                srt_content += f"{start_h:02}:{start_m:02}:{start_s:06.3f}".replace('.', ',')
+                srt_content += f" --> {end_h:02}:{end_m:02}:{end_s:06.3f}".replace('.', ',')
+                srt_content += f"\n{text}\n\n"
+
+            # 繁简转换
+            srt_content = convert_to_simplified(srt_content)
+            return {
+                "source": "whisper_asr",
+                "format": "srt",
+                "subtitle_count": len(segments),
+                "content": srt_content,
+                "video_title": file_title
+            }
+
+        else:  # TEXT
+            text_content = '\n'.join(seg["text"] for seg in segments)
+            # 繁简转换
+            text_content = convert_to_simplified(text_content)
+            return {
+                "source": "whisper_asr",
+                "format": "text",
+                "subtitle_count": len(segments),
+                "content": text_content,
+                "video_title": file_title
+            }
+
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''
+        return {
+            "error": f"ASR转录失败: {type(e).__name__}",
+            "message": str(e),
+            "stderr": stderr[:200] if stderr else None,
+            "suggestion": "请确保已安装 ffmpeg: brew install ffmpeg"
+        }
+    except FileNotFoundError:
+        return {
+            "error": "ASR转录失败: FileNotFoundError",
+            "message": "未找到必要的命令行工具",
+            "suggestion": "请安装 ffmpeg: brew install ffmpeg"
+        }
+    except Exception as e:
+        return {
+            "error": f"ASR转录失败: {type(e).__name__}",
+            "message": str(e)
+        }
+
+
 async def download_subtitles_with_asr(
         url: str,
         format: ResponseFormat = ResponseFormat.TEXT,
