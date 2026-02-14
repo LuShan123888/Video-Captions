@@ -33,11 +33,11 @@ pip install bilibili-captions
 ### 运行
 
 ```bash
-# 1. 设置 SESSDATA 环境变量
-export BILIBILI_SESSDATA="你的值"
+# 默认自动从浏览器读取（最省事！）
+bilibili-captions <BV号或URL>
 
-# 2. 运行命令
-bilibili-captions <BV号或URL> [模型大小]
+# 指定浏览器（可选）
+bilibili-captions --browser chrome <BV号或URL>  # 指定Chrome浏览器
 
 # 示例 - 支持多种 URL 格式
 bilibili-captions BV16YC3BrEDz                                    # 直接 BV 号
@@ -45,6 +45,8 @@ bilibili-captions https://www.bilibili.com/video/BV1qViQBwELr   # 完整 URL
 bilibili-captions https://www.bilibili.com/list/watchlater/?bvid=BV16HqFBZE6N  # 稍后观看
 bilibili-captions "【我们拍到了，中国自己的可回收火箭。】 https://www.bilibili.com/video/BV1y7qwBuEBw/?share_source=copy_web&vd_source=17128cd8d40d0802659ba5ee37ab47d1"  # 分享复制
 ```
+
+**浏览器支持：** 默认 `auto` (自动检测) / `chrome` / `edge` / `firefox` / `brave`
 
 **模型大小选项：**
 - `base` - 最快，精度较低
@@ -182,6 +184,17 @@ pytest tests/test_videos.py
 
 ### SESSDATA 获取
 
+**方式1: 浏览器自动读取（默认，推荐！）**
+
+默认情况下，工具会自动从浏览器读取 SESSDATA，你只需要：
+
+1. 在浏览器中登录 [B站](https://www.bilibili.com/)
+2. 直接运行 `bilibili-captions <视频链接>`
+
+支持浏览器：Chrome、Edge、Firefox、Brave
+
+**方式2: 手动复制**
+
 1. 登录 [B站](https://www.bilibili.com/)
 2. F12 → Application → Cookies → `SESSDATA`
 3. 复制值到环境变量或 `.env` 文件
@@ -209,6 +222,7 @@ cp .env.example .env
 | `filelock` | >=3.20.0 | 文件锁定 |
 | `tqdm` | >=4.66.0 | 进度条显示 |
 | `urllib3` | >=2.6.0 | URL 处理 |
+| `browser-cookie3` | >=0.19.0 | 浏览器 Cookie 读取 |
 
 > **注意：** ASR 功能使用 mlx-whisper，仅支持 Apple Silicon (M1/M2/M3/M4) Mac。
 
@@ -254,11 +268,11 @@ pip install bilibili-captions
 ### Running
 
 ```bash
-# 1. Set SESSDATA environment variable
-export BILIBILI_SESSDATA="your_value"
+# Default: Auto-read from browser (most convenient!)
+bilibili-captions <BV_ID_or_URL>
 
-# 2. Run command
-bilibili-captions <BV_ID_or_URL> [model_size]
+# Specify browser (optional)
+bilibili-captions --browser chrome <BV_ID_or_URL>  # Use Chrome browser
 
 # Examples - supports multiple URL formats
 bilibili-captions BV16YC3BrEDz                                    # Direct BV ID
@@ -266,6 +280,8 @@ bilibili-captions https://www.bilibili.com/video/BV1qViQBwELr   # Full URL
 bilibili-captions https://www.bilibili.com/list/watchlater/?bvid=BV16HqFBZE6N  # Watch later
 bilibili-captions "【Title】 https://www.bilibili.com/video/BV1y7qwBuEBw/?share_source=copy_web&vd_source=xxx"  # Share copy
 ```
+
+**Browser support:** Default `auto` (auto-detect) / `chrome` / `edge` / `firefox` / `brave`
 
 **Model size options:**
 - `base` - Fastest, lower accuracy
@@ -403,6 +419,17 @@ pytest tests/test_videos.py
 
 ### Get SESSDATA
 
+**Method 1: Browser auto-read (default, recommended!)**
+
+By default, the tool automatically reads SESSDATA from your browser. You only need to:
+
+1. Login to [Bilibili](https://www.bilibili.com/) in your browser
+2. Run `bilibili-captions <video_url>`
+
+Supported browsers: Chrome, Edge, Firefox, Brave
+
+**Method 2: Manual copy**
+
 1. Login to [Bilibili](https://www.bilibili.com/)
 2. F12 → Application → Cookies → `SESSDATA`
 3. Copy value to environment variable or `.env` file
@@ -430,6 +457,7 @@ cp .env.example .env
 | `filelock` | >=3.20.0 | File locking |
 | `tqdm` | >=4.66.0 | Progress bar |
 | `urllib3` | >=2.6.0 | URL handling |
+| `browser-cookie3` | >=0.19.0 | Browser cookie reading |
 
 > **Note:** ASR uses mlx-whisper, which only supports Apple Silicon (M1/M2/M3/M4) Macs.
 

@@ -47,8 +47,11 @@ def print_result(result: dict) -> None:
 def main() -> None:
     """CLI入口点"""
     if len(sys.argv) < 2:
-        print("用法: bilibili-captions <B站视频URL或本地文件路径> [模型大小]")
-        print("模型大小可选: base, small, medium, large, large-v3 (默认)")
+        print("用法: bilibili-captions <B站视频URL或本地文件路径> [选项]")
+        print()
+        print("选项:")
+        print("  --browser <类型>  从浏览器读取 SESSDATA (auto, chrome, edge, firefox, brave)")
+        print("  --model <大小>     Whisper 模型大小 (base, small, medium, large, large-v3)")
         print()
         print("支持的格式:")
         print("  - B站视频URL (如: https://www.bilibili.com/video/BV1xx...)")
@@ -56,8 +59,35 @@ def main() -> None:
         print("  - 本地视频文件 (mp4, avi, mkv, mov, flv, wmv, webm, m4v)")
         sys.exit(1)
 
-    input_arg = sys.argv[1]
-    model_size = sys.argv[2] if len(sys.argv) > 2 else "large-v3"
+    # 解析参数
+    input_arg = None
+    browser = "auto"  # 默认自动从浏览器读取
+    model_size = "large-v3"
+
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg == "--browser":
+            if i + 1 < len(sys.argv):
+                browser = sys.argv[i + 1]
+                i += 2
+            else:
+                print("错误: --browser 参数需要指定浏览器类型")
+                sys.exit(1)
+        elif arg == "--model":
+            if i + 1 < len(sys.argv):
+                model_size = sys.argv[i + 1]
+                i += 2
+            else:
+                print("错误: --model 参数需要指定模型大小")
+                sys.exit(1)
+        else:
+            input_arg = arg
+            i += 1
+
+    if not input_arg:
+        print("错误: 请提供 B站视频URL或本地文件路径")
+        sys.exit(1)
 
     # 验证模型大小
     valid_models = ["base", "small", "medium", "large", "large-v3"]
@@ -90,7 +120,7 @@ def main() -> None:
 
     # 检查 SESSDATA
     try:
-        require_sessdata()
+        require_sessdata(browser=browser)
     except ValueError as e:
         print(f"错误: {e}")
         sys.exit(1)
@@ -113,7 +143,7 @@ def main() -> None:
         sys.exit(1)
 
     # 下载字幕（API优先，ASR兜底）
-    sessdata = get_sessdata()
+    sessdata = get_sessdata(browser=browser)
     result = asyncio.run(download_subtitles_with_asr(
         video_url,
         ResponseFormat.TEXT,

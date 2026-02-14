@@ -45,11 +45,16 @@ def make_safe_filename(filename: str) -> str:
     return re.sub(r'[\\/*?:"<>|]', "", filename)
 
 
-def get_sessdata(sessdata: Optional[str] = None) -> Optional[str]:
-    """获取SESSDATA，按优先级从参数、环境变量、配置文件读取
+def get_sessdata(
+        sessdata: Optional[str] = None,
+        browser: Optional[str] = "auto"
+) -> Optional[str]:
+    """获取SESSDATA，按优先级从参数、环境变量、配置文件、浏览器读取
 
     Args:
         sessdata: 直接传入的SESSDATA
+        browser: 指定从哪个浏览器读取 ("auto", "chrome", "edge", "firefox", "brave", None)
+                  默认为 "auto"，设为 None 可禁用浏览器读取
 
     Returns:
         SESSDATA字符串，如果都未找到则返回None
@@ -71,15 +76,27 @@ def get_sessdata(sessdata: Optional[str] = None) -> Optional[str]:
                 if line.startswith('BILIBILI_SESSDATA='):
                     return line.strip().split('=', 1)[1].strip('"\'')
 
+    # 4. 从浏览器读取（如果启用）
+    if browser is not False:  # 允许显式禁用浏览器读取
+        from .browser import get_sessdata_from_browser
+        browser_sessdata = get_sessdata_from_browser(browser or "auto")
+        if browser_sessdata:
+            return browser_sessdata
+
     # 没有找到SESSDATA，返回None
     return None
 
 
-def require_sessdata(sessdata: Optional[str] = None) -> str:
+def require_sessdata(
+        sessdata: Optional[str] = None,
+        browser: Optional[str] = "auto"
+) -> str:
     """获取SESSDATA，如果没有找到则抛出异常
 
     Args:
         sessdata: 直接传入的SESSDATA
+        browser: 指定从哪个浏览器读取 ("auto", "chrome", "edge", "firefox", "brave", None)
+                  默认为 "auto"，设为 None 可禁用浏览器读取
 
     Returns:
         SESSDATA字符串
@@ -87,13 +104,14 @@ def require_sessdata(sessdata: Optional[str] = None) -> str:
     Raises:
         ValueError: 如果没有找到SESSDATA
     """
-    result = get_sessdata(sessdata)
+    result = get_sessdata(sessdata, browser)
     if not result:
         raise ValueError(
             "未找到B站SESSDATA认证信息。请通过以下方式之一提供：\n"
-            "1. 设置环境变量 BILIBILI_SESSDATA\n"
-            "2. 在项目目录创建 .env 文件并添加: BILIBILI_SESSDATA=你的值\n"
-            "3. 调用时传入 sessdata 参数"
+            "1. 在浏览器中登录 B站（推荐，默认会自动读取）\n"
+            "2. 设置环境变量 BILIBILI_SESSDATA\n"
+            "3. 在项目目录创建 .env 文件并添加: BILIBILI_SESSDATA=你的值\n"
+            "4. 调用时传入 sessdata 参数"
         )
     return result
 
