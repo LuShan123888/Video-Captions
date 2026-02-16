@@ -10,11 +10,17 @@
 import os
 import shutil
 import sqlite3
+import sys
 import tempfile
 from typing import Optional
 from pathlib import Path
 
 BILIBILI_DOMAIN = ".bilibili.com"
+
+
+def _log_debug(message: str) -> None:
+    """打印调试日志"""
+    print(f"[bilibili-captions]   └─ [browser] {message}", file=sys.stderr)
 
 
 def _get_chromium_cookie_file(browser_name: str) -> Optional[Path]:
@@ -117,88 +123,135 @@ def _extract_sessdata_from_sqlite(cookie_file: Path) -> Optional[str]:
             os.unlink(temp_path)
 
 
-def _try_browser_cookie3() -> Optional[str]:
+def _try_browser_cookie3(log: bool = True) -> Optional[str]:
     """尝试使用 browser-cookie3 库读取加密 Cookie
+
+    Args:
+        log: 是否打印日志
 
     Returns:
         SESSDATA 字符串，未找到或库不可用返回 None
     """
     try:
         import browser_cookie3
+        if log:
+            _log_debug("browser-cookie3 库已加载")
 
         # 尝试不同的浏览器
         browsers_to_try = [
-            browser_cookie3.chrome,
-            browser_cookie3.edge,
-            browser_cookie3.firefox,
-            browser_cookie3.brave,
-            browser_cookie3.opera,
+            ("Chrome", browser_cookie3.chrome),
+            ("Edge", browser_cookie3.edge),
+            ("Firefox", browser_cookie3.firefox),
+            ("Brave", browser_cookie3.brave),
+            ("Opera", browser_cookie3.opera),
         ]
 
-        for browser_func in browsers_to_try:
+        for browser_name, browser_func in browsers_to_try:
             try:
+                if log:
+                    _log_debug(f"尝试从 {browser_name} 读取...")
                 cookie_jar = browser_func(domain_name=BILIBILI_DOMAIN)
                 for cookie in cookie_jar:
                     if cookie.name == 'SESSDATA':
+                        if log:
+                            _log_debug(f"从 {browser_name} 找到 SESSDATA")
                         return cookie.value
-            except Exception:
+                if log:
+                    _log_debug(f"{browser_name} 未找到 SESSDATA")
+            except Exception as e:
+                if log:
+                    _log_debug(f"{browser_name} 读取失败: {type(e).__name__}")
                 continue
 
         return None
 
     except ImportError:
-        # browser-cookie3 库未安装
+        if log:
+            _log_debug("browser-cookie3 库未安装")
         return None
-    except Exception:
+    except Exception as e:
+        if log:
+            _log_debug(f"browser-cookie3 错误: {type(e).__name__}: {e}")
         return None
 
 
-def get_chrome_cookie() -> Optional[str]:
+def get_chrome_cookie(log: bool = True) -> Optional[str]:
     """从 Chrome 浏览器读取 SESSDATA
 
+    Args:
+        log: 是否打印日志
+
     Returns:
         SESSDATA 字符串，未找到返回 None
     """
-    return _try_browser_cookie3()
+    return _try_browser_cookie3(log)
 
 
-def get_edge_cookie() -> Optional[str]:
+def get_edge_cookie(log: bool = True) -> Optional[str]:
     """从 Edge 浏览器读取 SESSDATA
 
+    Args:
+        log: 是否打印日志
+
     Returns:
         SESSDATA 字符串，未找到返回 None
     """
-    return _try_browser_cookie3()
+    return _try_browser_cookie3(log)
 
 
-def get_firefox_cookie() -> Optional[str]:
+def get_firefox_cookie(log: bool = True) -> Optional[str]:
     """从 Firefox 浏览器读取 SESSDATA
 
+    Args:
+        log: 是否打印日志
+
     Returns:
         SESSDATA 字符串，未找到返回 None
     """
-    return _try_browser_cookie3()
+    return _try_browser_cookie3(log)
 
 
-def get_brave_cookie() -> Optional[str]:
+def get_brave_cookie(log: bool = True) -> Optional[str]:
     """从 Brave 浏览器读取 SESSDATA
 
+    Args:
+        log: 是否打印日志
+
     Returns:
         SESSDATA 字符串，未找到返回 None
     """
-    return _try_browser_cookie3()
+    return _try_browser_cookie3(log)
 
 
-def get_sessdata_from_browser(browser: str = "auto") -> Optional[str]:
+# 记录最后成功读取的浏览器
+_last_successful_browser: Optional[str] = None
+
+
+def get_browser_name(browser: str = "auto") -> Optional[str]:
+    """获取最后成功读取 Cookie 的浏览器名称
+
+    Args:
+        browser: 传入的浏览器参数（用于默认值）
+
+    Returns:
+        浏览器名称，如果未成功读取过则返回传入的参数
+    """
+    global _last_successful_browser
+    return _last_successful_browser or browser
+
+
+def get_sessdata_from_browser(browser: str = "auto", log: bool = True) -> Optional[str]:
     """从浏览器读取 SESSDATA
 
     Args:
         browser: 浏览器类型 ("auto", "chrome", "edge", "firefox", "brave")
                 auto 模式会自动尝试所有浏览器
+        log: 是否打印日志
 
     Returns:
         SESSDATA 字符串，未找到返回 None
     """
+    global _last_successful_browser
     browsers = []
 
     if browser == "auto":
@@ -208,17 +261,18 @@ def get_sessdata_from_browser(browser: str = "auto") -> Optional[str]:
 
     for browser_name in browsers:
         if browser_name == "chrome":
-            sessdata = get_chrome_cookie()
+            sessdata = get_chrome_cookie(log)
         elif browser_name == "edge":
-            sessdata = get_edge_cookie()
+            sessdata = get_edge_cookie(log)
         elif browser_name == "firefox":
-            sessdata = get_firefox_cookie()
+            sessdata = get_firefox_cookie(log)
         elif browser_name == "brave":
-            sessdata = get_brave_cookie()
+            sessdata = get_brave_cookie(log)
         else:
             continue
 
         if sessdata:
+            _last_successful_browser = browser_name
             return sessdata
 
     return None

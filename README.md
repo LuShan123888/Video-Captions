@@ -111,7 +111,6 @@ Bilibili-Captions/
 ├── tests/
 │   ├── __init__.py
 │   └── test_videos.py    # 测试用例
-├── .env.example          # 配置示例
 ├── pyproject.toml
 └── README.md
 ```
@@ -125,10 +124,6 @@ cd Bilibili-Captions
 
 # 安装依赖
 uv sync
-
-# 设置 SESSDATA
-cp .env.example .env
-# 编辑 .env 填入 SESSDATA
 ```
 
 #### CLI 运行
@@ -193,19 +188,14 @@ pytest tests/test_videos.py
 
 支持浏览器：Chrome、Edge、Firefox、Brave
 
-**方式2: 手动复制**
+**方式2: 环境变量**
 
 1. 登录 [B站](https://www.bilibili.com/)
 2. F12 → Application → Cookies → `SESSDATA`
-3. 复制值到环境变量或 `.env` 文件
+3. 设置环境变量
 
 ```bash
-# 方式1: 环境变量
 export BILIBILI_SESSDATA="你的值"
-
-# 方式2: .env 文件
-cp .env.example .env
-# 编辑 .env 填入 SESSDATA
 ```
 
 ## 依赖
@@ -346,7 +336,6 @@ Bilibili-Captions/
 ├── tests/
 │   ├── __init__.py
 │   └── test_videos.py    # Test cases
-├── .env.example          # Configuration example
 ├── pyproject.toml
 └── README.md
 ```
@@ -360,10 +349,6 @@ cd Bilibili-Captions
 
 # Install dependencies
 uv sync
-
-# Set SESSDATA
-cp .env.example .env
-# Edit .env and fill in SESSDATA
 ```
 
 #### CLI
@@ -428,19 +413,14 @@ By default, the tool automatically reads SESSDATA from your browser. You only ne
 
 Supported browsers: Chrome, Edge, Firefox, Brave
 
-**Method 2: Manual copy**
+**Method 2: Environment variable**
 
 1. Login to [Bilibili](https://www.bilibili.com/)
 2. F12 → Application → Cookies → `SESSDATA`
-3. Copy value to environment variable or `.env` file
+3. Set environment variable
 
 ```bash
-# Method 1: Environment variable
 export BILIBILI_SESSDATA="your_value"
-
-# Method 2: .env file
-cp .env.example .env
-# Edit .env and fill in SESSDATA
 ```
 
 ## Dependencies

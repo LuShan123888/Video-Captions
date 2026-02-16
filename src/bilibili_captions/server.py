@@ -12,7 +12,7 @@ from .core import (
     download_subtitles_with_asr,
     transcribe_file_with_asr,
     ResponseFormat,
-    get_sessdata,
+    get_sessdata_with_source,
 )
 
 # 初始化MCP服务器
@@ -26,9 +26,9 @@ mcp = FastMCP("bilibili-captions")
 
 @mcp.tool()
 async def download_captions(
-    url: str,
-    format: Literal["text", "srt", "json"] = "text",
-    model_size: Literal["base", "small", "medium", "large", "large-v3"] = "large-v3"
+        url: str,
+        format: Literal["text", "srt", "json"] = "text",
+        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "large-v3"
 ) -> dict:
     """下载B站视频字幕内容，支持多种格式。
 
@@ -70,7 +70,8 @@ async def download_captions(
         - 所有字幕输出自动转换为简体中文
     """
     try:
-        sessdata = get_sessdata()
+        sessdata, source = get_sessdata_with_source()
+
         # MCP 服务器禁用进度条（无终端输出）
         return await download_subtitles_with_asr(
             url, ResponseFormat(format), model_size, sessdata, show_progress=False
@@ -84,9 +85,9 @@ async def download_captions(
 
 @mcp.tool()
 async def transcribe_local_file(
-    file_path: str,
-    format: Literal["text", "srt", "json"] = "text",
-    model_size: Literal["base", "small", "medium", "large", "large-v3"] = "medium"
+        file_path: str,
+        format: Literal["text", "srt", "json"] = "text",
+        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "medium"
 ) -> dict:
     """对本地音频/视频文件进行 ASR 语音识别生成字幕。
 

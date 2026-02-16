@@ -24,6 +24,53 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
+
+# ============================================================================
+# 日志系统
+# ============================================================================
+
+_verbose_log = False
+
+
+def set_verbose_log(enabled: bool = True) -> None:
+    """启用/禁用详细日志"""
+    global _verbose_log
+    _verbose_log = enabled
+
+
+def log_info(message: str) -> None:
+    """打印信息日志"""
+    print(f"[bilibili-captions] {message}", file=sys.stderr)
+
+
+def log_step(step: str, message: str = "") -> None:
+    """打印步骤日志"""
+    if message:
+        print(f"[bilibili-captions] ▶ {step}: {message}", file=sys.stderr)
+    else:
+        print(f"[bilibili-captions] ▶ {step}", file=sys.stderr)
+
+
+def log_success(message: str) -> None:
+    """打印成功日志"""
+    print(f"[bilibili-captions] ✓ {message}", file=sys.stderr)
+
+
+def log_warning(message: str) -> None:
+    """打印警告日志"""
+    print(f"[bilibili-captions] ⚠ {message}", file=sys.stderr)
+
+
+def log_error(message: str) -> None:
+    """打印错误日志"""
+    print(f"[bilibili-captions] ✗ {message}", file=sys.stderr)
+
+
+def log_debug(message: str) -> None:
+    """打印调试日志（仅在详细模式下）"""
+    if _verbose_log:
+        print(f"[bilibili-captions]   └─ {message}", file=sys.stderr)
+
 import httpx
 from tqdm import tqdm
 from opencc import OpenCC
@@ -49,7 +96,7 @@ def get_sessdata(
         sessdata: Optional[str] = None,
         browser: Optional[str] = "auto"
 ) -> Optional[str]:
-    """获取SESSDATA，按优先级从参数、环境变量、配置文件、浏览器读取
+    """获取SESSDATA，按优先级从参数、环境变量、浏览器读取
 
     Args:
         sessdata: 直接传入的SESSDATA
@@ -59,32 +106,72 @@ def get_sessdata(
     Returns:
         SESSDATA字符串，如果都未找到则返回None
     """
+    result, _ = get_sessdata_with_source(sessdata, browser, log=False)
+    return result
+
+
+def get_sessdata_with_source(
+        sessdata: Optional[str] = None,
+        browser: Optional[str] = "auto",
+        log: bool = True
+) -> tuple[Optional[str], Optional[str]]:
+    """获取SESSDATA及其来源，按优先级从参数、环境变量、浏览器读取
+
+    Args:
+        sessdata: 直接传入的SESSDATA
+        browser: 指定从哪个浏览器读取 ("auto", "chrome", "edge", "firefox", "brave", None)
+                  默认为 "auto"，设为 None 可禁用浏览器读取
+        log: 是否打印日志（默认 True）
+
+    Returns:
+        (SESSDATA字符串, 来源描述)，如果都未找到则返回(None, None)
+        来源描述: "parameter" | "env" | "browser:{name}" | None
+    """
+    if log:
+        log_step("获取 SESSDATA")
+
     # 1. 使用传入的参数
+    if log:
+        log_debug("检查参数传入...")
     if sessdata:
-        return sessdata
+        if log:
+            log_success("从参数获取 SESSDATA")
+        return sessdata, "parameter"
+    if log:
+        log_debug("参数未传入")
 
     # 2. 从环境变量读取
+    if log:
+        log_debug("检查环境变量 BILIBILI_SESSDATA...")
     env_sessdata = os.environ.get('BILIBILI_SESSDATA')
     if env_sessdata:
-        return env_sessdata
+        if log:
+            log_success("从环境变量获取 SESSDATA")
+        return env_sessdata, "env"
+    if log:
+        log_debug("环境变量未设置")
 
-    # 3. 从项目目录的 .env 文件读取
-    env_file = os.path.join(os.path.dirname(__file__), '.env')
-    if os.path.exists(env_file):
-        with open(env_file, 'r') as f:
-            for line in f:
-                if line.startswith('BILIBILI_SESSDATA='):
-                    return line.strip().split('=', 1)[1].strip('"\'')
-
-    # 4. 从浏览器读取（如果启用）
+    # 3. 从浏览器读取（如果启用）
     if browser is not False:  # 允许显式禁用浏览器读取
-        from .browser import get_sessdata_from_browser
-        browser_sessdata = get_sessdata_from_browser(browser or "auto")
+        if log:
+            log_debug(f"尝试从浏览器读取 (模式: {browser or 'auto'})...")
+        from .browser import get_sessdata_from_browser, get_browser_name
+        browser_sessdata = get_sessdata_from_browser(browser or "auto", log=log)
         if browser_sessdata:
-            return browser_sessdata
+            detected_browser = get_browser_name(browser or "auto")
+            if log:
+                log_success(f"从浏览器获取 SESSDATA ({detected_browser})")
+            return browser_sessdata, f"browser:{detected_browser}"
+        if log:
+            log_debug("浏览器未找到 SESSDATA")
+    else:
+        if log:
+            log_debug("浏览器读取已禁用")
 
     # 没有找到SESSDATA，返回None
-    return None
+    if log:
+        log_warning("未获取到 SESSDATA")
+    return None, None
 
 
 def require_sessdata(
@@ -110,8 +197,7 @@ def require_sessdata(
             "未找到B站SESSDATA认证信息。请通过以下方式之一提供：\n"
             "1. 在浏览器中登录 B站（推荐，默认会自动读取）\n"
             "2. 设置环境变量 BILIBILI_SESSDATA\n"
-            "3. 在项目目录创建 .env 文件并添加: BILIBILI_SESSDATA=你的值\n"
-            "4. 调用时传入 sessdata 参数"
+            "3. 调用时传入 sessdata 参数"
         )
     return result
 
@@ -295,13 +381,17 @@ async def download_subtitle_content(
     """
     try:
         # 先获取字幕列表
+        log_debug("获取字幕列表...")
         subtitle_info = await list_subtitles(url, sessdata)
 
         if not subtitle_info['available']:
+            log_debug("该视频没有可用字幕")
             return {
                 "error": "该视频没有可用字幕",
                 "suggestion": "对于无字幕视频，可以使用 ASR 功能生成字幕"
             }
+
+        log_debug(f"找到 {len(subtitle_info['subtitles'])} 个字幕")
 
         # 选择中文AI字幕
         zh_subtitle = None
@@ -313,10 +403,14 @@ async def download_subtitle_content(
         if not zh_subtitle:
             zh_subtitle = subtitle_info['subtitles'][0]
 
+        log_debug(f"选择字幕: {zh_subtitle.get('lan', 'unknown')} - {zh_subtitle.get('lan_doc', '')}")
+
         # 获取视频信息
+        log_debug("获取视频信息...")
         video_info = await get_video_info(url, sessdata)
 
         # 下载字幕内容
+        log_debug("下载字幕文件...")
         subtitle_url = zh_subtitle['subtitle_url']
         if not subtitle_url.startswith('http'):
             subtitle_url = 'https:' + subtitle_url
@@ -331,6 +425,7 @@ async def download_subtitle_content(
             subtitle_json = response.json()
 
         body = subtitle_json.get('body', [])
+        log_success(f"API 获取成功，共 {len(body)} 条字幕")
 
         # 根据格式返回内容
         if format == ResponseFormat.JSON:
@@ -451,7 +546,7 @@ async def transcribe_with_asr(
     model_path = model_map.get(model_size, "mlx-community/whisper-large-v3-mlx")
 
     if show_progress:
-        print(f"加载 Whisper {model_size} 模型 (mlx-whisper)...")
+        log_step(f"加载 Whisper {model_size} 模型", "(mlx-whisper)")
 
     start_time = time.time()
 
@@ -529,7 +624,7 @@ async def download_and_extract_audio(
     # 使用 yt-dlp 下载视频
     if not os.path.exists(video_filename):
         if show_progress:
-            print("正在下载视频...")
+            log_step("正在下载视频")
         subprocess.run(
             ['yt-dlp', '-o', video_filename, url],
             check=True,
@@ -538,7 +633,7 @@ async def download_and_extract_audio(
 
     # 使用 ffmpeg 提取音频
     if show_progress:
-        print("正在提取音频...")
+        log_step("正在提取音频")
     subprocess.run(
         ['ffmpeg', '-y', '-i', video_filename, '-vn',
          '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', audio_filename],
@@ -743,24 +838,38 @@ async def download_subtitles_with_asr(
     Returns:
         与 download_subtitle_content 相同格式，但 source 可能是 "whisper_asr"
     """
+    log_step("下载字幕", f"URL: {url[:50]}...")
+
     # 先尝试从API获取
     result = await download_subtitle_content(url, format, sessdata)
 
     # 如果有错误（无字幕），使用ASR兜底
     if "error" in result:
+        log_warning(f"API 无字幕: {result.get('error', '未知错误')}")
+        log_step("切换到 ASR 模式", f"模型: {model_size}")
+
         # 使用临时目录
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
                 # 下载视频并提取音频
+                log_step("下载视频并提取音频")
                 audio_file, video_title, bvid = await download_and_extract_audio(
                     url, temp_dir, show_progress
                 )
+                log_success(f"音频提取完成: {os.path.basename(audio_file)}")
+
+                # 打印视频标题框（ASR 输出前）
+                print(f"{'='*60}")
+                print(f"视频标题: {video_title}")
+                print(f"{'='*60}\n")
 
                 # 使用ASR生成字幕
+                log_step("ASR 语音识别", "这可能需要几分钟...")
                 asr_result = await transcribe_with_asr(audio_file, model_size, show_progress)
 
                 # 转换为请求的格式
                 segments = asr_result.get("segments", [])
+                log_success(f"ASR 完成，共 {len(segments)} 个片段")
 
                 if format == ResponseFormat.JSON:
                     return {

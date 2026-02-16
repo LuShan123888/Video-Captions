@@ -18,7 +18,7 @@ from .core import (
     get_video_info,
     require_sessdata,
     ResponseFormat,
-    get_sessdata,
+    get_sessdata_with_source,
 )
 
 
@@ -32,9 +32,16 @@ def print_result(result: dict) -> None:
             print(f"提示: {result['suggestion']}")
         return None
 
-    # 打印字幕内容（ASR 已通过 verbose 输出，无需重复打印）
     source = result.get("source", "")
+
+    # 打印视频标题框（ASR 模式已在 core.py 中打印，这里只处理 API 模式）
     if source != "whisper_asr":
+        video_title = result.get("video_title", "未知")
+        print(f"{'='*60}")
+        print(f"视频标题: {video_title}")
+        print(f"{'='*60}\n")
+
+        # 打印字幕内容
         content = result.get("content")
         if content:
             print(content)
@@ -118,32 +125,15 @@ def main() -> None:
     # B站 URL 模式
     video_url = input_arg
 
-    # 检查 SESSDATA
-    try:
-        require_sessdata(browser=browser)
-    except ValueError as e:
-        print(f"错误: {e}")
-        sys.exit(1)
+    # 检查并获取 SESSDATA
+    sessdata, source = get_sessdata_with_source(browser=browser)
 
-    # 获取视频信息并显示头部
-    try:
-        info = asyncio.run(get_video_info(video_url))
-        video_title = info.get('title', '未知')
-
-        # 显示字幕来源（先用 API 尝试，失败则用 ASR）
-        has_subtitle = info.get('has_subtitle', False)
-        source_label = "B站AI字幕 (API直接获取)" if has_subtitle else "Whisper ASR语音识别 (AI生成，如无API字幕)"
-
-        print(f"{'='*60}")
-        print(f"视频标题: {video_title}")
-        print(f"字幕来源: {source_label}")
-        print(f"{'='*60}\n")
-    except Exception as e:
-        print(f"错误: 无法获取视频信息 - {e}")
+    if not sessdata:
+        print("[bilibili-captions] ✗ 错误: 未找到 SESSDATA", file=sys.stderr)
+        print("[bilibili-captions] 提示: 请设置环境变量 BILIBILI_SESSDATA 或确保浏览器已登录 B站", file=sys.stderr)
         sys.exit(1)
 
     # 下载字幕（API优先，ASR兜底）
-    sessdata = get_sessdata(browser=browser)
     result = asyncio.run(download_subtitles_with_asr(
         video_url,
         ResponseFormat.TEXT,
@@ -151,6 +141,7 @@ def main() -> None:
         sessdata
     ))
 
+    # 打印结果（包含视频标题框）
     print_result(result)
 
 
