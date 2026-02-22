@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
         print("\n=== 测试 1: 有 API 字幕的视频 ===")
         result1 = await download_subtitles_with_asr(
-            VIDEO_WITH_SUBTITLES, ResponseFormat.TEXT, "medium", sessdata
+            VIDEO_WITH_SUBTITLES, ResponseFormat.TEXT, "large", sessdata
         )
         print(f"来源: {result1.get('source')}")
         print(f"字幕数: {result1.get('subtitle_count')}")
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
         print("\n=== 测试 2: 无字幕视频 (ASR 兜底) ===")
         result2 = await download_subtitles_with_asr(
-            VIDEO_WITHOUT_SUBTITLES, ResponseFormat.TEXT, "medium", sessdata
+            VIDEO_WITHOUT_SUBTITLES, ResponseFormat.TEXT, "large", sessdata
         )
         print(f"来源: {result2.get('source')}")
         print(f"字幕数: {result2.get('subtitle_count')}")

@@ -28,7 +28,8 @@ mcp = FastMCP("bilibili-captions")
 async def download_captions(
         url: str,
         format: Literal["text", "srt", "json"] = "text",
-        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "large-v3"
+        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "large-v3",
+        browser: Literal["auto", "chrome", "edge", "firefox", "brave"] = "auto"
 ) -> dict:
     """下载B站视频字幕内容，支持多种格式。
 
@@ -46,6 +47,12 @@ async def download_captions(
             - "medium": 平衡
             - "large": 同 large-v3
             - "large-v3": 精度最高（默认，mlx-whisper 优化）
+        browser: 从哪个浏览器读取 SESSDATA（用于获取 AI 字幕）
+            - "auto": 自动尝试所有浏览器（默认）
+            - "chrome": 仅从 Chrome 读取
+            - "edge": 仅从 Edge 读取
+            - "firefox": 仅从 Firefox 读取
+            - "brave": 仅从 Brave 读取
 
     Returns:
         成功时:
@@ -64,13 +71,14 @@ async def download_captions(
         }
 
     Note:
-        - 需要在 MCP 配置中设置 BILIBILI_SESSDATA 环境变量以获取 AI 字幕
+        - 获取 AI 字幕需要 SESSDATA，优先从浏览器 Cookie 读取
+        - 也可通过 BILIBILI_SESSDATA 环境变量配置
         - ASR 兜底需要安装 yt-dlp 和 ffmpeg
         - ASR 处理可能需要几分钟，请在 Claude Desktop 中增加超时时间
         - 所有字幕输出自动转换为简体中文
     """
     try:
-        sessdata, source = get_sessdata_with_source()
+        sessdata, source = get_sessdata_with_source(browser=browser, log=True)
 
         # MCP 服务器禁用进度条（无终端输出）
         return await download_subtitles_with_asr(
