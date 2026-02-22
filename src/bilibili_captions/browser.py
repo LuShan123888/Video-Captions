@@ -160,7 +160,7 @@ def _try_browser_cookie3(log: bool = True) -> Optional[str]:
                     _log_debug(f"{browser_name} 未找到 SESSDATA")
             except Exception as e:
                 if log:
-                    _log_debug(f"{browser_name} 读取失败: {type(e).__name__}")
+                    _log_debug(f"{browser_name} 读取失败: {type(e).__name__}: {e}")
                 continue
 
         return None
