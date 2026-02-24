@@ -3,14 +3,15 @@
 """
 
 import os
+import subprocess
 import tempfile
 from typing import Dict, Any, Optional
 
 from .base import SubtitleService
-from core.formatter import ResponseFormat
+from core.formatter import ResponseFormat, format_subtitle
 from core.audio import extract_audio, is_video_file, is_audio_file
 from core.asr import transcribe_with_asr
-from core.logging import log_step
+from core.logging import log_step, log_success
 
 
 class LocalService(SubtitleService):
@@ -22,41 +23,28 @@ class LocalService(SubtitleService):
 
     def is_supported(self, source: str) -> bool:
         """判断是否为本地文件"""
-        # 检查是否为本地文件路径
         if os.path.isabs(source) or source.startswith('./') or source.startswith('../'):
             return os.path.exists(source) and (is_video_file(source) or is_audio_file(source))
-        # 检查当前目录下是否存在该文件
         return os.path.exists(source) and (is_video_file(source) or is_audio_file(source))
 
     async def get_info(self, source: str) -> Dict[str, Any]:
         """获取文件信息"""
         if not os.path.exists(source):
-            return {
-                "error": "文件不存在",
-                "message": f"文件不存在: {source}"
-            }
+            return {"error": "文件不存在", "message": f"文件不存在: {source}"}
 
         file_title = os.path.splitext(os.path.basename(source))[0]
-        file_size = os.path.getsize(source)
-        file_type = "video" if is_video_file(source) else "audio"
-
         return {
             "title": file_title,
             "id": file_title,
             "file_path": source,
-            "file_size": file_size,
-            "file_type": file_type,
-            "has_subtitle": False  # 本地文件需要 ASR
+            "file_size": os.path.getsize(source),
+            "file_type": "video" if is_video_file(source) else "audio",
+            "has_subtitle": False
         }
 
     async def list_subtitles(self, source: str) -> Dict[str, Any]:
         """本地文件没有预置字幕"""
-        return {
-            "available": False,
-            "subtitles": [],
-            "subtitle_count": 0,
-            "message": "本地文件需要使用 ASR 生成字幕"
-        }
+        return {"available": False, "subtitles": [], "subtitle_count": 0}
 
     async def download_subtitle(
         self,
@@ -67,21 +55,26 @@ class LocalService(SubtitleService):
     ) -> Dict[str, Any]:
         """对本地音频/视频文件进行 ASR 转录"""
         if not os.path.exists(source):
-            return {
-                "error": "文件不存在",
-                "message": f"文件不存在: {source}"
-            }
+            return {"error": "文件不存在", "message": f"文件不存在: {source}"}
 
         file_title = os.path.splitext(os.path.basename(source))[0]
+
+        # 打印文件信息
+        print(f"{'='*60}")
+        print(f"文件名称: {file_title}")
+        print(f"字幕来源: Whisper ASR语音识别 (AI生成)")
+        print(f"{'='*60}\n")
 
         try:
             if is_video_file(source):
                 with tempfile.TemporaryDirectory() as temp_dir:
+                    log_step("提取音频")
                     audio_file = extract_audio(source, temp_dir, show_progress)
+                    log_step("ASR 语音识别", "这可能需要几分钟...")
                     asr_result = await transcribe_with_asr(audio_file, model_size, show_progress)
             elif is_audio_file(source):
-                audio_file = source
-                asr_result = await transcribe_with_asr(audio_file, model_size, show_progress)
+                log_step("ASR 语音识别", "这可能需要几分钟...")
+                asr_result = await transcribe_with_asr(source, model_size, show_progress)
             else:
                 return {
                     "error": "不支持的文件格式",
@@ -91,39 +84,25 @@ class LocalService(SubtitleService):
                 }
 
             segments = asr_result.get("segments", [])
+            log_success(f"ASR 完成，共 {len(segments)} 个片段")
 
-            # 格式化输出
-            formatted_segments = [
-                {
-                    "start": seg["start"],
-                    "end": seg["end"],
-                    "content": seg["text"]
-                }
+            formatted = [
+                {"start": seg["start"], "end": seg["end"], "content": seg["text"]}
                 for seg in segments
             ]
 
-            from core.formatter import format_subtitle
-            return format_subtitle(
-                formatted_segments,
-                file_title,
-                format,
-                source="whisper_asr"
-            )
+            return format_subtitle(formatted, file_title, format, source="whisper_asr")
 
-        except Exception as e:
-            import subprocess
-            if isinstance(e, subprocess.CalledProcessError):
-                stderr = e.stderr if isinstance(e.stderr, str) else e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''
-                return {
-                    "error": f"ASR转录失败: {type(e).__name__}",
-                    "message": str(e),
-                    "stderr": stderr[:200] if stderr else None,
-                    "suggestion": "请确保已安装 ffmpeg: brew install ffmpeg"
-                }
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr if isinstance(e.stderr, str) else e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''
             return {
-                "error": f"ASR转录失败: {type(e).__name__}",
-                "message": str(e)
+                "error": "ASR转录失败",
+                "message": str(e),
+                "stderr": stderr[:200] if stderr else None,
+                "suggestion": "请确保已安装 ffmpeg: brew install ffmpeg"
             }
+        except Exception as e:
+            return {"error": f"ASR转录失败: {type(e).__name__}", "message": str(e)}
 
     async def download_video(
         self,

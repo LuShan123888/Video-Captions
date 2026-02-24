@@ -6,7 +6,6 @@
 
 import argparse
 import asyncio
-import os
 import sys
 
 from service import get_service
@@ -63,8 +62,6 @@ def main() -> None:
         default="text",
         help="输出格式"
     )
-    parser.add_argument("--list", action="store_true", help="仅列出可用字幕")
-    parser.add_argument("--info", action="store_true", help="仅显示视频信息")
 
     args = parser.parse_args()
 
@@ -81,20 +78,6 @@ def main() -> None:
     print(f"[video-captions] 检测到平台: {service.name}", file=sys.stderr)
 
     format = ResponseFormat(args.format)
-
-    # 本地文件模式
-    if service.name == "local":
-        file_title = os.path.splitext(os.path.basename(args.source))[0]
-        print(f"{'='*60}")
-        print(f"文件名称: {file_title}")
-        print(f"字幕来源: Whisper ASR语音识别 (AI生成)")
-        print(f"{'='*60}\n")
-
-        result = asyncio.run(service.download_subtitle(
-            args.source, format, model_size=args.model
-        ))
-        print_result(result)
-        return
 
     # 下载字幕
     result = asyncio.run(service.download_subtitle(args.source, format, model_size=args.model))
