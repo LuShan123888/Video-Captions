@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-B站字幕 MCP 服务器
+视频字幕 MCP Server Handler
 
-提供获取B站视频字幕的工具，优先使用API，无字幕时使用ASR生成。
+处理 MCP 协议，调用 Service 层完成字幕下载
 """
 
 from typing import Literal
-from mcp.server.fastmcp import FastMCP
-from .core import (
-    download_subtitles_with_asr,
-    transcribe_file_with_asr,
-    ResponseFormat,
-    get_sessdata_with_source,
-)
 
-# 初始化MCP服务器
-mcp = FastMCP("bilibili-captions")
+from mcp.server.fastmcp import FastMCP
+
+from service import get_service
+from core.formatter import ResponseFormat
+from core.cookie import get_sessdata_with_source
+
+# 初始化 MCP 服务器
+mcp = FastMCP("video-captions")
 
 
 # ============================================================================
@@ -28,26 +27,28 @@ mcp = FastMCP("bilibili-captions")
 async def download_captions(
         url: str,
         format: Literal["text", "srt", "json"] = "text",
-        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "large-v3",
+        model_size: Literal["base", "small", "medium", "large"] = "large",
         browser: Literal["auto", "chrome", "edge", "firefox", "brave"] = "auto"
 ) -> dict:
-    """下载B站视频字幕内容，支持多种格式。
+    """下载视频字幕内容，支持多种格式。
 
-    优先从B站API获取字幕，若无字幕则使用Whisper ASR自动生成。
+    支持平台：B站、YouTube
+    优先从平台 API 获取字幕，若无字幕则返回错误。
 
     Args:
-        url: B站视频URL（支持多种格式：完整URL、BV号、稍后观看链接等）
+        url: 视频 URL
+            - B站: https://www.bilibili.com/video/BV1xx... 或 BV号
+            - YouTube: https://www.youtube.com/watch?v=... 或 youtu.be/...
         format: 输出格式
             - "text": 纯文本，适合阅读和总结
             - "srt": SRT字幕格式，适合视频播放
             - "json": 结构化JSON数据，适合程序处理
-        model_size: ASR模型大小（当API无字幕时使用）
+        model_size: ASR 模型大小（当 API 无字幕时使用）
             - "base": 最快，精度较低
             - "small": 较快
             - "medium": 平衡
-            - "large": 同 large-v3
-            - "large-v3": 精度最高（默认，mlx-whisper 优化）
-        browser: 从哪个浏览器读取 SESSDATA（用于获取 AI 字幕）
+            - "large": 精度最高（默认，mlx-whisper 优化）
+        browser: 从哪个浏览器读取 Cookie
             - "auto": 自动尝试所有浏览器（默认）
             - "chrome": 仅从 Chrome 读取
             - "edge": 仅从 Edge 读取
@@ -57,10 +58,10 @@ async def download_captions(
     Returns:
         成功时:
         {
-            "source": "bilibili_api" | "whisper_asr",  # 字幕来源
+            "source": "bilibili_api" | "youtube_api",
             "format": str,
             "subtitle_count": int,
-            "content": str,          # text/srt格式
+            "content": str,
             "video_title": str
         }
 
@@ -69,21 +70,24 @@ async def download_captions(
             "error": str,
             "message": str
         }
-
-    Note:
-        - 获取 AI 字幕需要 SESSDATA，优先从浏览器 Cookie 读取
-        - 也可通过 BILIBILI_SESSDATA 环境变量配置
-        - ASR 兜底需要安装 yt-dlp 和 ffmpeg
-        - ASR 处理可能需要几分钟，请在 Claude Desktop 中增加超时时间
-        - 所有字幕输出自动转换为简体中文
     """
     try:
-        sessdata, source = get_sessdata_with_source(browser=browser, log=True)
+        service = get_service(url, browser)
 
-        # MCP 服务器禁用进度条（无终端输出）
-        return await download_subtitles_with_asr(
-            url, ResponseFormat(format), model_size, sessdata, show_progress=False
-        )
+        if not service:
+            return {
+                "error": "不支持的 URL 格式",
+                "message": f"不支持的 URL: {url}",
+                "suggestion": "支持的平台：B站 (bilibili.com)、YouTube (youtube.com)"
+            }
+
+        # B站需要 SESSDATA
+        if service.name == "bilibili":
+            sessdata, source = get_sessdata_with_source(browser=browser, log=True)
+
+        result = await service.download_subtitle(url, ResponseFormat(format))
+        return result
+
     except Exception as e:
         return {
             "error": f"下载字幕时发生错误: {type(e).__name__}",
@@ -95,7 +99,7 @@ async def download_captions(
 async def transcribe_local_file(
         file_path: str,
         format: Literal["text", "srt", "json"] = "text",
-        model_size: Literal["base", "small", "medium", "large", "large-v3"] = "medium"
+        model_size: Literal["base", "small", "medium", "large"] = "large"
 ) -> dict:
     """对本地音频/视频文件进行 ASR 语音识别生成字幕。
 
@@ -109,12 +113,11 @@ async def transcribe_local_file(
             - "text": 纯文本，适合阅读和总结
             - "srt": SRT字幕格式，适合视频播放
             - "json": 结构化JSON数据，适合程序处理
-        model_size: ASR模型大小
+        model_size: ASR 模型大小
             - "base": 最快，精度较低
             - "small": 较快
             - "medium": 平衡（默认）
-            - "large": 同 large-v3
-            - "large-v3": 精度最高（mlx-whisper 优化）
+            - "large": 精度最高（mlx-whisper 优化）
 
     Returns:
         成功时:
@@ -122,26 +125,32 @@ async def transcribe_local_file(
             "source": "whisper_asr",
             "format": str,
             "subtitle_count": int,
-            "content": str,          # text/srt格式
-            "video_title": str       # 文件名
+            "content": str,
+            "video_title": str
         }
 
         错误时:
         {
             "error": str,
             "message": str,
-            "suggestion": str        # 可选的解决建议
+            "suggestion": str
         }
-
-    Note:
-        - 需要安装 ffmpeg（视频文件会先提取音频）
-        - ASR 处理可能需要几分钟，请在 Claude Desktop 中增加超时时间
-        - 所有字幕输出自动转换为简体中文
     """
     try:
-        # MCP 服务器禁用进度条（无终端输出）
-        return await transcribe_file_with_asr(
-            file_path, ResponseFormat(format), model_size, show_progress=False
+        from service.local import LocalService
+
+        service = LocalService()
+
+        if not service.is_supported(file_path):
+            return {
+                "error": "不支持的文件格式",
+                "message": f"不支持的文件格式: {file_path}",
+                "suggestion": "支持的音频格式: mp3, wav, m4a, aac, flac, ogg, wma, opus; "
+                              "支持的视频格式: mp4, avi, mkv, mov, flv, wmv, webm, m4v"
+            }
+
+        return await service.download_subtitle(
+            file_path, ResponseFormat(format), model_size=model_size, show_progress=False
         )
     except Exception as e:
         return {
@@ -155,7 +164,7 @@ async def transcribe_local_file(
 # ============================================================================
 
 def main() -> None:
-    """MCP服务器入口点"""
+    """MCP 服务器入口点"""
     mcp.run()
 
 

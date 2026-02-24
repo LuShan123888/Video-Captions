@@ -76,7 +76,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: pypi
-      url: https://pypi.org/p/bilibili-captions
+      url: https://pypi.org/p/video-captions
 
     steps:
       - name: Download all the dists

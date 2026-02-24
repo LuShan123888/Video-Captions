@@ -1,10 +1,6 @@
-# /// script
-# dependencies = ["httpx", "mlx-whisper", "opencc-python-reimplemented"]
-# -*-
-
 """
 浏览器 Cookie 读取模块
-支持从 Chrome、Edge、Firefox 浏览器读取 B站 SESSDATA
+支持从 Chrome、Edge、Firefox、Brave 浏览器读取 B站 SESSDATA
 """
 
 import os
@@ -20,7 +16,7 @@ BILIBILI_DOMAIN = ".bilibili.com"
 
 def _log_debug(message: str) -> None:
     """打印调试日志"""
-    print(f"[bilibili-captions]   └─ [browser] {message}", file=sys.stderr)
+    print(f"[video-captions]   └─ [browser] {message}", file=sys.stderr)
 
 
 def _get_chromium_cookie_file(browser_name: str) -> Optional[Path]:
