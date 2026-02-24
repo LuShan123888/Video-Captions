@@ -11,8 +11,7 @@ import sys
 
 from service import get_service
 from core.formatter import ResponseFormat
-from core.cookie import get_sessdata_with_source
-from core.logging import log_info, log_error, set_verbose_log
+from core.logging import log_info, set_verbose_log
 
 
 def print_result(result: dict) -> None:
@@ -79,8 +78,7 @@ def main() -> None:
         print("支持的平台: B站、YouTube、本地音频/视频文件")
         sys.exit(1)
 
-    service_name = service.name
-    print(f"[video-captions] 检测到平台: {service_name}", file=sys.stderr)
+    print(f"[video-captions] 检测到平台: {service.name}", file=sys.stderr)
 
     format = ResponseFormat(args.format)
 
@@ -107,7 +105,7 @@ def main() -> None:
         return
 
     # 本地文件模式
-    if service_name == "local":
+    if service.name == "local":
         file_title = os.path.splitext(os.path.basename(args.source))[0]
         print(f"{'='*60}")
         print(f"文件名称: {file_title}")
@@ -120,16 +118,8 @@ def main() -> None:
         print_result(result)
         return
 
-    # URL 模式 - B站需要 SESSDATA
-    if service_name == "bilibili":
-        sessdata, source = get_sessdata_with_source(browser=args.browser)
-        if not sessdata:
-            log_error("未找到 SESSDATA")
-            print("[video-captions] 提示: 请设置环境变量 BILIBILI_SESSDATA 或确保浏览器已登录 B站", file=sys.stderr)
-            sys.exit(1)
-
     # 下载字幕
-    result = asyncio.run(service.download_subtitle(args.source, format))
+    result = asyncio.run(service.download_subtitle(args.source, format, model_size=args.model))
     print_result(result)
 
 

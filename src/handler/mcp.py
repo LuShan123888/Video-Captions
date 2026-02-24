@@ -12,15 +12,9 @@ from mcp.server.fastmcp import FastMCP
 
 from service import get_service
 from core.formatter import ResponseFormat
-from core.cookie import get_sessdata_with_source
 
 # 初始化 MCP 服务器
 mcp = FastMCP("video-captions")
-
-
-# ============================================================================
-# 工具定义
-# ============================================================================
 
 
 @mcp.tool()
@@ -33,7 +27,7 @@ async def download_captions(
     """下载视频字幕内容，支持多种格式。
 
     支持平台：B站、YouTube
-    优先从平台 API 获取字幕，若无字幕则返回错误。
+    优先从平台 API 获取字幕，若无字幕则使用 ASR 生成。
 
     Args:
         url: 视频 URL
@@ -58,7 +52,7 @@ async def download_captions(
     Returns:
         成功时:
         {
-            "source": "bilibili_api" | "youtube_api",
+            "source": "bilibili_api" | "youtube_api" | "whisper_asr",
             "format": str,
             "subtitle_count": int,
             "content": str,
@@ -81,11 +75,7 @@ async def download_captions(
                 "suggestion": "支持的平台：B站 (bilibili.com)、YouTube (youtube.com)"
             }
 
-        # B站需要 SESSDATA
-        if service.name == "bilibili":
-            sessdata, source = get_sessdata_with_source(browser=browser, log=True)
-
-        result = await service.download_subtitle(url, ResponseFormat(format))
+        result = await service.download_subtitle(url, ResponseFormat(format), model_size=model_size)
         return result
 
     except Exception as e:
@@ -158,10 +148,6 @@ async def transcribe_local_file(
             "message": str(e)
         }
 
-
-# ============================================================================
-# 主入口
-# ============================================================================
 
 def main() -> None:
     """MCP 服务器入口点"""

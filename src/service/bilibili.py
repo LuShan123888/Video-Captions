@@ -33,6 +33,7 @@ class BilibiliService(SubtitleService):
 
     def __init__(self, browser: Optional[str] = "auto"):
         self.browser = browser
+        self._sessdata = None
 
     @property
     def name(self) -> str:
@@ -67,12 +68,23 @@ class BilibiliService(SubtitleService):
             return last_part
         raise ValueError(f"无法从 URL 中提取 BV 号: {url}")
 
+    def _ensure_sessdata(self) -> str:
+        """确保获取 SESSDATA，如果没有则抛出异常"""
+        if self._sessdata:
+            return self._sessdata
+
+        sessdata = get_sessdata(self.browser)
+        if not sessdata:
+            raise ValueError(
+                "未找到 B站 SESSDATA。请通过以下方式之一提供：\n"
+                "1. 在浏览器中登录 B站（推荐）\n"
+                "2. 设置环境变量 BILIBILI_SESSDATA"
+            )
+        self._sessdata = sessdata
+        return sessdata
+
     def _get_cookies(self) -> dict:
-        cookies = {}
-        sess = get_sessdata(self.browser)
-        if sess:
-            cookies['SESSDATA'] = sess
-        return cookies
+        return {'SESSDATA': self._ensure_sessdata()}
 
     async def get_info(self, source: str) -> Dict[str, Any]:
         """获取 B站视频基本信息"""
