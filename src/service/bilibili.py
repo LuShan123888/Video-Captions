@@ -2,6 +2,7 @@
 B站服务 - 字幕下载和处理
 """
 
+import logging
 import os
 import re
 import subprocess
@@ -10,6 +11,9 @@ import urllib.parse
 from typing import Dict, Any, Optional, List
 
 import httpx
+
+# 禁用 httpx 的 HTTP 请求日志
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 from .base import SubtitleService
 from core.formatter import ResponseFormat, format_subtitle
