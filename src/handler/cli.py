@@ -82,28 +82,6 @@ def main() -> None:
 
     format = ResponseFormat(args.format)
 
-    # 仅显示视频信息
-    if args.info:
-        info = asyncio.run(service.get_info(args.source))
-        print(f"\n视频标题: {info.get('title', '未知')}")
-        print(f"视频ID: {info.get('id', '未知')}")
-        print(f"时长: {info.get('duration', 0)} 秒")
-        print(f"有字幕: {'是' if info.get('has_subtitle') else '否'}")
-        return
-
-    # 仅列出可用字幕
-    if args.list:
-        subtitle_info = asyncio.run(service.list_subtitles(args.source))
-        if subtitle_info.get("available"):
-            print(f"\n可用字幕 ({subtitle_info.get('subtitle_count', 0)} 个):")
-            for sub in subtitle_info.get("subtitles", []):
-                print(f"  - {sub.get('lan')}: {sub.get('lan_doc', '')}")
-        else:
-            print("\n该视频没有可用字幕")
-            if "error" in subtitle_info:
-                print(f"错误: {subtitle_info['error']}")
-        return
-
     # 本地文件模式
     if service.name == "local":
         file_title = os.path.splitext(os.path.basename(args.source))[0]
