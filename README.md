@@ -10,11 +10,11 @@
 
 ### 功能特性
 
-- 🎬 **多平台支持** - B站、YouTube、本地音视频文件
-- 🤖 **ASR 生成** - 无字幕时自动使用 Whisper 生成
-- 🌏 **繁简转换** - 自动转换为简体中文
-- 📦 **MCP 服务器** - 集成到 Claude Desktop
-- 🧪 **完整测试** - 包含真实视频测试用例
+- **多平台支持** - B站、YouTube、本地音视频文件
+- **ASR 生成** - 无字幕时自动使用 Whisper 生成
+- **繁简转换** - 自动转换为简体中文
+- **MCP 服务器** - 集成到 Claude Desktop
+- **完整测试** - 包含真实视频测试用例
 
 ## 使用
 
@@ -28,9 +28,6 @@ uv tool install video-captions
 
 # 或使用 pip
 pip install video-captions
-
-# 旧命令名仍然可用（向后兼容）
-uv tool install video-captions
 ```
 
 ### 运行
@@ -53,11 +50,8 @@ video-captions --browser chrome <URL>
 video-captions --format srt <URL>      # SRT 字幕格式
 video-captions --format json <URL>     # JSON 结构化数据
 
-# 仅查看视频信息
-video-captions --info <URL>
-
-# 仅列出可用字幕
-video-captions --list <URL>
+# 指定 ASR 模型
+video-captions --model small <URL>
 
 # 显示详细日志
 video-captions --verbose <URL>
@@ -69,8 +63,6 @@ video-captions --verbose <URL>
 | `--browser` | 从浏览器读取 Cookie: `auto`(默认) / `chrome` / `edge` / `firefox` / `brave` |
 | `--model` | ASR 模型: `base` / `small` / `medium` / `large`(默认) |
 | `--format` | 输出格式: `text`(默认) / `srt` / `json` |
-| `--info` | 仅显示视频信息 |
-| `--list` | 仅列出可用字幕 |
 | `--verbose, -v` | 显示详细日志 |
 
 **模型大小选项：**
@@ -137,7 +129,7 @@ video-captions --verbose <URL>
 
 ```
 video-captions/
-├── src/bilibili_captions/
+├── src/
 │   ├── handler/           # 接入层：CLI 和 MCP
 │   │   ├── cli.py         # CLI 入口
 │   │   ├── mcp.py         # MCP 服务器
@@ -147,14 +139,14 @@ video-captions/
 │   │   ├── bilibili.py    # B站服务
 │   │   ├── youtube.py     # YouTube 服务
 │   │   └── local.py       # 本地文件服务
-│   ├── core/              # 基础层：通用功能
-│   │   ├── asr.py         # ASR 转录
-│   │   ├── audio.py       # 音频提取
-│   │   ├── cookie.py      # Cookie 管理
-│   │   ├── formatter.py   # 字幕格式化
-│   │   ├── logging.py     # 日志系统
-│   │   └── text.py        # 文本处理
-│   └── __init__.py
+│   └── core/              # 基础层：通用功能
+│       ├── asr.py         # ASR 转录
+│       ├── audio.py       # 音频提取
+│       ├── browser.py     # 浏览器 Cookie
+│       ├── cookie.py      # Cookie 管理
+│       ├── formatter.py   # 字幕格式化
+│       ├── logging.py     # 日志系统
+│       └── text.py        # 文本处理
 ├── tests/
 │   ├── test_bilibili.py   # B站测试用例
 │   └── test_youtube.py    # YouTube 测试用例
@@ -194,7 +186,7 @@ video-captions <URL>
   "mcpServers": {
     "video-captions-dev": {
       "command": "uv",
-      "args": ["--directory", "/path/to/Bilibili-Captions", "run", "video-captions-mcp"],
+      "args": ["--directory", "/path/to/Video-Captions", "run", "video-captions-mcp"],
       "timeout": 600000
     }
   }
@@ -279,11 +271,11 @@ A video subtitle download tool that supports Bilibili, YouTube, and local files 
 
 ### Features
 
-- 🎬 **Multi-Platform** - Bilibili, YouTube, and local audio/video files
-- 🤖 **ASR Generation** - Automatically generate subtitles with Whisper when none exist
-- 🌏 **Conversion** - Automatically convert Traditional Chinese to Simplified Chinese
-- 📦 **MCP Server** - Integrate with Claude Desktop
-- 🧪 **Tested** - Includes real video test cases
+- **Multi-Platform** - Bilibili, YouTube, and local audio/video files
+- **ASR Generation** - Automatically generate subtitles with Whisper when none exist
+- **Conversion** - Automatically convert Traditional Chinese to Simplified Chinese
+- **MCP Server** - Integrate with Claude Desktop
+- **Tested** - Includes real video test cases
 
 ## Usage
 
@@ -297,9 +289,6 @@ uv tool install video-captions
 
 # Or using pip
 pip install video-captions
-
-# Old command names still work (backward compatible)
-uv tool install video-captions
 ```
 
 ### Running
@@ -322,11 +311,8 @@ video-captions --browser chrome <URL>
 video-captions --format srt <URL>      # SRT subtitle format
 video-captions --format json <URL>     # JSON structured data
 
-# View video info only
-video-captions --info <URL>
-
-# List available subtitles only
-video-captions --list <URL>
+# Specify ASR model
+video-captions --model small <URL>
 
 # Show verbose logs
 video-captions --verbose <URL>
@@ -338,8 +324,6 @@ video-captions --verbose <URL>
 | `--browser` | Read Cookie from browser: `auto`(default) / `chrome` / `edge` / `firefox` / `brave` |
 | `--model` | ASR model: `base` / `small` / `medium` / `large`(default) |
 | `--format` | Output format: `text`(default) / `srt` / `json` |
-| `--info` | Show video info only |
-| `--list` | List available subtitles only |
 | `--verbose, -v` | Show verbose logs |
 
 **Model size options:**
@@ -406,7 +390,7 @@ Perform ASR speech recognition on local audio/video files.
 
 ```
 video-captions/
-├── src/bilibili_captions/
+├── src/
 │   ├── handler/           # Handler layer: CLI and MCP
 │   │   ├── cli.py         # CLI entry point
 │   │   ├── mcp.py         # MCP server
@@ -416,14 +400,14 @@ video-captions/
 │   │   ├── bilibili.py    # Bilibili service
 │   │   ├── youtube.py     # YouTube service
 │   │   └── local.py       # Local file service
-│   ├── core/              # Core layer: common utilities
-│   │   ├── asr.py         # ASR transcription
-│   │   ├── audio.py       # Audio extraction
-│   │   ├── cookie.py      # Cookie management
-│   │   ├── formatter.py   # Subtitle formatting
-│   │   ├── logging.py     # Logging system
-│   │   └── text.py        # Text processing
-│   └── __init__.py
+│   └── core/              # Core layer: common utilities
+│       ├── asr.py         # ASR transcription
+│       ├── audio.py       # Audio extraction
+│       ├── browser.py     # Browser Cookie
+│       ├── cookie.py      # Cookie management
+│       ├── formatter.py   # Subtitle formatting
+│       ├── logging.py     # Logging system
+│       └── text.py        # Text processing
 ├── tests/
 │   ├── test_bilibili.py   # Bilibili test cases
 │   └── test_youtube.py    # YouTube test cases
@@ -463,7 +447,7 @@ Add local development config in Claude Desktop's `claude_desktop_config.json`:
   "mcpServers": {
     "video-captions-dev": {
       "command": "uv",
-      "args": ["--directory", "/path/to/Bilibili-Captions", "run", "video-captions-mcp"],
+      "args": ["--directory", "/path/to/Video-Captions", "run", "video-captions-mcp"],
       "timeout": 600000
     }
   }
@@ -482,7 +466,7 @@ The project includes test cases for real videos:
 | 5GJU5-UMNWk | YouTube | No subtitles ASR fallback |
 
 ```bash
-uv run python tests/test_videos.py
+uv run python tests/test_bilibili.py
 uv run python tests/test_youtube.py
 # or
 pytest tests/

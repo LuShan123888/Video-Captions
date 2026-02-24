@@ -5,7 +5,7 @@ VERSION := $(shell grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"
 
 # 默认目标
 help:
-	@echo "Bilibili-Captions Makefile"
+	@echo "Video-Captions Makefile"
 	@echo ""
 	@echo "当前版本: $(VERSION)"
 	@echo ""
