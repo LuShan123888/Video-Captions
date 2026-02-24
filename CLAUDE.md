@@ -11,7 +11,7 @@
 - 无字幕时使用 Whisper ASR 自动生成
 - 自动繁简转换
 - 提供 CLI 和 MCP 两种使用方式
-- **支持自动从浏览器读取 Cookie**（Chrome、Edge、Firefox、Brave）
+- 支持自动从浏览器读取 Cookie（Chrome、Edge、Firefox、Brave）
 
 **Python 版本要求：** >=3.10
 
@@ -19,8 +19,6 @@
 
 ```
 src/
-├── bilibili_captions/       # 主包入口（兼容性导出）
-│   └── __init__.py
 ├── core/                    # 基础层：通用功能
 │   ├── asr.py              # ASR 转录
 │   ├── audio.py            # 音频提取
@@ -49,8 +47,17 @@ uv sync
 # 运行 CLI
 uv run video-captions <URL>
 
-# 指定浏览器（可选）
+# 指定浏览器读取 Cookie
 uv run video-captions --browser chrome <URL>
+
+# 指定输出格式
+uv run video-captions --format srt <URL>
+
+# 指定 ASR 模型
+uv run video-captions --model small <URL>
+
+# 显示详细日志
+uv run video-captions --verbose <URL>
 
 # 运行 MCP 服务器
 uv run video-captions-mcp
@@ -59,6 +66,15 @@ uv run video-captions-mcp
 uv run python tests/test_bilibili.py
 uv run python tests/test_youtube.py
 ```
+
+## CLI 选项
+
+| 选项 | 说明 |
+|------|------|
+| `--browser` | 从浏览器读取 Cookie: `auto` / `chrome` / `edge` / `firefox` / `brave` |
+| `--model` | ASR 模型: `base` / `small` / `medium` / `large` |
+| `--format` | 输出格式: `text` / `srt` / `json` |
+| `--verbose, -v` | 显示详细日志 |
 
 ## 外部依赖
 

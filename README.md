@@ -58,6 +58,7 @@ video-captions --verbose <URL>
 ```
 
 **命令行选项：**
+
 | 选项 | 说明 |
 |------|------|
 | `--browser` | 从浏览器读取 Cookie: `auto`(默认) / `chrome` / `edge` / `firefox` / `brave` |
@@ -66,6 +67,7 @@ video-captions --verbose <URL>
 | `--verbose, -v` | 显示详细日志 |
 
 **模型大小选项：**
+
 - `base` - 最快，精度较低
 - `small` - 较快
 - `medium` - 平衡
@@ -80,7 +82,9 @@ video-captions --verbose <URL>
   "mcpServers": {
     "video-captions": {
       "command": "uvx",
-      "args": ["video-captions-mcp"],
+      "args": [
+        "video-captions-mcp"
+      ],
       "timeout": 600000
     }
   }
@@ -95,14 +99,15 @@ video-captions --verbose <URL>
 
 下载视频字幕，支持 B站、YouTube 和本地文件。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `url` | 必需 | 视频 URL 或本地文件路径 |
-| `format` | 可选 | `text`(默认) / `srt` / `json` |
-| `model_size` | 可选 | `base` / `small` / `medium` / `large`(默认) |
-| `browser` | 可选 | `auto`(默认) / `chrome` / `edge` / `firefox` / `brave` |
+| 参数           | 类型 | 说明                                                   |
+|--------------|----|------------------------------------------------------|
+| `url`        | 必需 | 视频 URL 或本地文件路径                                       |
+| `format`     | 可选 | `text`(默认) / `srt` / `json`                          |
+| `model_size` | 可选 | `base` / `small` / `medium` / `large`(默认)            |
+| `browser`    | 可选 | `auto`(默认) / `chrome` / `edge` / `firefox` / `brave` |
 
 **返回示例：**
+
 ```json
 {
   "source": "bilibili_api",
@@ -117,10 +122,10 @@ video-captions --verbose <URL>
 
 对本地音频/视频文件进行 ASR 语音识别。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `file_path` | 必需 | 本地文件路径 |
-| `format` | 可选 | `text`(默认) / `srt` / `json` |
+| 参数           | 类型 | 说明                                        |
+|--------------|----|-------------------------------------------|
+| `file_path`  | 必需 | 本地文件路径                                    |
+| `format`     | 可选 | `text`(默认) / `srt` / `json`               |
 | `model_size` | 可选 | `base` / `small` / `medium` / `large`(默认) |
 
 ## 开发
@@ -186,7 +191,12 @@ video-captions <URL>
   "mcpServers": {
     "video-captions-dev": {
       "command": "uv",
-      "args": ["--directory", "/path/to/Video-Captions", "run", "video-captions-mcp"],
+      "args": [
+        "--directory",
+        "/path/to/Video-Captions",
+        "run",
+        "video-captions-mcp"
+      ],
       "timeout": 600000
     }
   }
@@ -197,12 +207,12 @@ video-captions <URL>
 
 项目包含真实视频的测试用例：
 
-| 视频 | 平台 | 场景 |
-|------|------|------|
-| BV16YC3BrEDz | B站 | 有 API 字幕 |
-| BV1qViQBwELr | B站 | 无字幕 ASR 兜底 |
-| kQ-aFczITCg | YouTube | 有 API 字幕 |
-| 5GJU5-UMNWk | YouTube | 无字幕 ASR 兜底 |
+| 视频           | 平台      | 场景         |
+|--------------|---------|------------|
+| BV16YC3BrEDz | B站      | 有 API 字幕   |
+| BV1qViQBwELr | B站      | 无字幕 ASR 兜底 |
+| kQ-aFczITCg  | YouTube | 有 API 字幕   |
+| 5GJU5-UMNWk  | YouTube | 无字幕 ASR 兜底 |
 
 ```bash
 uv run python tests/test_bilibili.py
@@ -242,13 +252,13 @@ YouTube 视频通常不需要登录。对于年龄限制视频，工具会自动
 
 ### Python 依赖
 
-| 依赖 | 版本 | 用途 |
-|------|------|------|
-| `mcp` | >=1.0.0 | MCP 协议支持 |
-| `httpx` | >=0.28.1 | HTTP 客户端 |
-| `mlx-whisper` | >=0.4.0 | 语音识别（Apple Silicon 优化） |
-| `opencc-python-reimplemented` | >=0.1.7 | 繁简转换 |
-| `browser-cookie3` | >=0.19.0 | 浏览器 Cookie 读取 |
+| 依赖                            | 版本       | 用途                     |
+|-------------------------------|----------|------------------------|
+| `mcp`                         | >=1.0.0  | MCP 协议支持               |
+| `httpx`                       | >=0.28.1 | HTTP 客户端               |
+| `mlx-whisper`                 | >=0.4.0  | 语音识别（Apple Silicon 优化） |
+| `opencc-python-reimplemented` | >=0.1.7  | 繁简转换                   |
+| `browser-cookie3`             | >=0.19.0 | 浏览器 Cookie 读取          |
 
 > **注意：** ASR 功能使用 mlx-whisper，仅支持 Apple Silicon (M1/M2/M3/M4) Mac。
 
@@ -267,7 +277,8 @@ MIT
 
 ## English
 
-A video subtitle download tool that supports Bilibili, YouTube, and local files with API fetching and Whisper ASR generation.
+A video subtitle download tool that supports Bilibili, YouTube, and local files with API fetching and Whisper ASR
+generation.
 
 ### Features
 
@@ -319,6 +330,7 @@ video-captions --verbose <URL>
 ```
 
 **CLI Options:**
+
 | Option | Description |
 |--------|-------------|
 | `--browser` | Read Cookie from browser: `auto`(default) / `chrome` / `edge` / `firefox` / `brave` |
@@ -327,6 +339,7 @@ video-captions --verbose <URL>
 | `--verbose, -v` | Show verbose logs |
 
 **Model size options:**
+
 - `base` - Fastest, lower accuracy
 - `small` - Faster
 - `medium` - Balanced
@@ -341,7 +354,9 @@ Configure in Claude Desktop's `claude_desktop_config.json`:
   "mcpServers": {
     "video-captions": {
       "command": "uvx",
-      "args": ["video-captions-mcp"],
+      "args": [
+        "video-captions-mcp"
+      ],
       "timeout": 600000
     }
   }
@@ -356,14 +371,15 @@ Configure in Claude Desktop's `claude_desktop_config.json`:
 
 Download video subtitles, supports Bilibili, YouTube, and local files.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `url` | Required | Video URL or local file path |
-| `format` | Optional | `text`(default) / `srt` / `json` |
-| `model_size` | Optional | `base` / `small` / `medium` / `large`(default) |
-| `browser` | Optional | `auto`(default) / `chrome` / `edge` / `firefox` / `brave` |
+| Parameter    | Type     | Description                                               |
+|--------------|----------|-----------------------------------------------------------|
+| `url`        | Required | Video URL or local file path                              |
+| `format`     | Optional | `text`(default) / `srt` / `json`                          |
+| `model_size` | Optional | `base` / `small` / `medium` / `large`(default)            |
+| `browser`    | Optional | `auto`(default) / `chrome` / `edge` / `firefox` / `brave` |
 
 **Response example:**
+
 ```json
 {
   "source": "bilibili_api",
@@ -378,10 +394,10 @@ Download video subtitles, supports Bilibili, YouTube, and local files.
 
 Perform ASR speech recognition on local audio/video files.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `file_path` | Required | Local file path |
-| `format` | Optional | `text`(default) / `srt` / `json` |
+| Parameter    | Type     | Description                                    |
+|--------------|----------|------------------------------------------------|
+| `file_path`  | Required | Local file path                                |
+| `format`     | Optional | `text`(default) / `srt` / `json`               |
 | `model_size` | Optional | `base` / `small` / `medium` / `large`(default) |
 
 ## Development
@@ -447,7 +463,12 @@ Add local development config in Claude Desktop's `claude_desktop_config.json`:
   "mcpServers": {
     "video-captions-dev": {
       "command": "uv",
-      "args": ["--directory", "/path/to/Video-Captions", "run", "video-captions-mcp"],
+      "args": [
+        "--directory",
+        "/path/to/Video-Captions",
+        "run",
+        "video-captions-mcp"
+      ],
       "timeout": 600000
     }
   }
@@ -458,12 +479,12 @@ Add local development config in Claude Desktop's `claude_desktop_config.json`:
 
 The project includes test cases for real videos:
 
-| Video | Platform | Scenario |
-|-------|----------|----------|
-| BV16YC3BrEDz | Bilibili | Has API subtitles |
+| Video        | Platform | Scenario                  |
+|--------------|----------|---------------------------|
+| BV16YC3BrEDz | Bilibili | Has API subtitles         |
 | BV1qViQBwELr | Bilibili | No subtitles ASR fallback |
-| kQ-aFczITCg | YouTube | Has API subtitles |
-| 5GJU5-UMNWk | YouTube | No subtitles ASR fallback |
+| kQ-aFczITCg  | YouTube  | Has API subtitles         |
+| 5GJU5-UMNWk  | YouTube  | No subtitles ASR fallback |
 
 ```bash
 uv run python tests/test_bilibili.py
@@ -497,19 +518,20 @@ export BILIBILI_SESSDATA="your_value"
 
 **YouTube**
 
-YouTube videos typically don't require login. For age-restricted videos, the tool automatically tries to read cookies from the browser.
+YouTube videos typically don't require login. For age-restricted videos, the tool automatically tries to read cookies
+from the browser.
 
 ## Dependencies
 
 ### Python Dependencies
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| `mcp` | >=1.0.0 | MCP protocol support |
-| `httpx` | >=0.28.1 | HTTP client |
-| `mlx-whisper` | >=0.4.0 | Speech recognition (Apple Silicon optimized) |
-| `opencc-python-reimplemented` | >=0.1.7 | Traditional/Simplified conversion |
-| `browser-cookie3` | >=0.19.0 | Browser cookie reading |
+| Dependency                    | Version  | Purpose                                      |
+|-------------------------------|----------|----------------------------------------------|
+| `mcp`                         | >=1.0.0  | MCP protocol support                         |
+| `httpx`                       | >=0.28.1 | HTTP client                                  |
+| `mlx-whisper`                 | >=0.4.0  | Speech recognition (Apple Silicon optimized) |
+| `opencc-python-reimplemented` | >=0.1.7  | Traditional/Simplified conversion            |
+| `browser-cookie3`             | >=0.19.0 | Browser cookie reading                       |
 
 > **Note:** ASR uses mlx-whisper, which only supports Apple Silicon (M1/M2/M3/M4) Macs.
 
