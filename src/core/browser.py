@@ -16,7 +16,8 @@ BILIBILI_DOMAIN = ".bilibili.com"
 
 def _log_debug(message: str) -> None:
     """打印调试日志"""
-    print(f"[video-captions]   └─ [browser] {message}", file=sys.stderr)
+    from .logging import log_debug as _ld
+    _ld(f"[browser] {message}")
 
 
 def _get_chromium_cookie_file(browser_name: str) -> Optional[Path]:
@@ -146,7 +147,14 @@ def _try_browser_cookie3(log: bool = True) -> Optional[str]:
             try:
                 if log:
                     _log_debug(f"尝试从 {browser_name} 读取...")
-                cookie_jar = browser_func(domain_name=BILIBILI_DOMAIN)
+                # 抑制 browser_cookie3 内部的 tqdm 进度条输出
+                with open(os.devnull, 'w') as devnull:
+                    old_stderr = sys.stderr
+                    sys.stderr = devnull
+                    try:
+                        cookie_jar = browser_func(domain_name=BILIBILI_DOMAIN)
+                    finally:
+                        sys.stderr = old_stderr
                 for cookie in cookie_jar:
                     if cookie.name == 'SESSDATA':
                         if log:

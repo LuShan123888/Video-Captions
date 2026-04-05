@@ -11,7 +11,7 @@ from .base import SubtitleService
 from core.formatter import ResponseFormat, format_subtitle
 from core.audio import extract_audio, is_video_file, is_audio_file
 from core.asr import transcribe_with_asr
-from core.logging import log_step, log_success
+from core.logging import log_step, log_success, log_info
 
 
 class LocalService(SubtitleService):
@@ -60,10 +60,8 @@ class LocalService(SubtitleService):
         file_title = os.path.splitext(os.path.basename(source))[0]
 
         # 打印文件信息
-        print(f"{'='*60}")
-        print(f"文件名称: {file_title}")
-        print(f"字幕来源: Whisper ASR语音识别 (AI生成)")
-        print(f"{'='*60}\n")
+        log_info(f"文件名称: {file_title}")
+        log_info("字幕来源: Whisper ASR语音识别 (AI生成)")
 
         try:
             if is_video_file(source):

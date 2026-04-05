@@ -52,7 +52,6 @@ async def transcribe_with_asr(
         language="zh",
         hallucination_silence_threshold=0.5,
         condition_on_previous_text=False,
-        verbose=show_progress,
     )
 
     elapsed = time.time() - start_time

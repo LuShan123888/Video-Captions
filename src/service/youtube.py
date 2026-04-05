@@ -62,7 +62,7 @@ class YouTubeService(SubtitleService):
 
     async def get_info(self, source: str) -> Dict[str, Any]:
         video_id = self._extract_video_id(source)
-        cmd = ['yt-dlp', '--dump-json', '--no-download'] + self._get_cookie_args() + [source]
+        cmd = ['yt-dlp', '--no-progress', '--dump-json', '--no-download'] + self._get_cookie_args() + [source]
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -126,7 +126,7 @@ class YouTubeService(SubtitleService):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     output = os.path.join(temp_dir, '%(id)s')
                     cmd = [
-                        'yt-dlp', '--write-subs', '--write-auto-subs',
+                        'yt-dlp', '--no-progress', '--write-subs', '--write-auto-subs',
                         '--sub-lang', lang, '--skip-download', '--sub-format', 'json3',
                         '-o', output
                     ] + self._get_cookie_args() + [source]
@@ -208,7 +208,7 @@ class YouTubeService(SubtitleService):
             log_step("正在下载 YouTube 视频")
 
         cmd = [
-            'yt-dlp', '-o', filename,
+            'yt-dlp', '--no-progress', '-o', filename,
             '--format', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',
         ] + self._get_cookie_args() + [source]

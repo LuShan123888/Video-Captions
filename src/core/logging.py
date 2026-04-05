@@ -24,12 +24,15 @@ def set_verbose_log(enabled: bool = True) -> None:
 
 
 def log_info(message: str) -> None:
-    """打印信息日志"""
-    print(f"{_LOG_PREFIX} {message}", file=sys.stderr)
+    """打印信息日志（仅在详细模式下）"""
+    if _verbose_log:
+        print(f"{_LOG_PREFIX} {message}", file=sys.stderr)
 
 
 def log_step(step: str, message: str = "") -> None:
-    """打印步骤日志"""
+    """打印步骤日志（仅在详细模式下）"""
+    if not _verbose_log:
+        return
     if message:
         print(f"{_LOG_PREFIX} ▶ {step}: {message}", file=sys.stderr)
     else:
@@ -37,13 +40,15 @@ def log_step(step: str, message: str = "") -> None:
 
 
 def log_success(message: str) -> None:
-    """打印成功日志"""
-    print(f"{_LOG_PREFIX} ✓ {message}", file=sys.stderr)
+    """打印成功日志（仅在详细模式下）"""
+    if _verbose_log:
+        print(f"{_LOG_PREFIX} ✓ {message}", file=sys.stderr)
 
 
 def log_warning(message: str) -> None:
-    """打印警告日志"""
-    print(f"{_LOG_PREFIX} ⚠ {message}", file=sys.stderr)
+    """打印警告日志（仅在详细模式下）"""
+    if _verbose_log:
+        print(f"{_LOG_PREFIX} ⚠ {message}", file=sys.stderr)
 
 
 def log_error(message: str) -> None:
