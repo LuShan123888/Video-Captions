@@ -2,10 +2,14 @@
 ASR 语音识别 - 使用 mlx-whisper 进行语音转录
 """
 
+import os
 import time
 from typing import Dict, Any, List
 
-from .logging import log_step
+from .logging import log_step, _verbose_log
+
+# 禁用 tqdm 进度条，避免非 verbose 模式下 huggingface_hub 输出无关信息
+os.environ["TQDM_DISABLE"] = "1"
 
 # 模型映射
 MODEL_MAP = {
@@ -14,6 +18,25 @@ MODEL_MAP = {
     "medium": "mlx-community/whisper-medium-mlx",
     "large": "mlx-community/whisper-large-v3-mlx",
 }
+
+
+def _suppress_output(func, *args, **kwargs):
+    """在函数执行期间抑制所有 stdout/stderr 输出（包括 C 扩展级别的写入）"""
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    # 保存原始 fd
+    stdout_fd = os.dup(1)
+    stderr_fd = os.dup(2)
+    try:
+        os.dup2(devnull, 1)
+        os.dup2(devnull, 2)
+        return func(*args, **kwargs)
+    finally:
+        # 恢复原始 fd
+        os.dup2(stdout_fd, 1)
+        os.dup2(stderr_fd, 2)
+        os.close(devnull)
+        os.close(stdout_fd)
+        os.close(stderr_fd)
 
 
 async def transcribe_with_asr(
@@ -46,13 +69,23 @@ async def transcribe_with_asr(
 
     start_time = time.time()
 
-    result = mlx_whisper.transcribe(
-        audio_file,
-        path_or_hf_repo=model_path,
-        language="zh",
-        hallucination_silence_threshold=0.5,
-        condition_on_previous_text=False,
-    )
+    # 非 verbose 模式下抑制 mlx_whisper 及 huggingface_hub 的所有输出
+    if _verbose_log:
+        result = mlx_whisper.transcribe(
+            audio_file,
+            path_or_hf_repo=model_path,
+            language="zh",
+            hallucination_silence_threshold=0.5,
+            condition_on_previous_text=False,
+        )
+    else:
+        result = _suppress_output(mlx_whisper.transcribe,
+            audio_file,
+            path_or_hf_repo=model_path,
+            language="zh",
+            hallucination_silence_threshold=0.5,
+            condition_on_previous_text=False,
+        )
 
     elapsed = time.time() - start_time
 

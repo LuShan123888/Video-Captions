@@ -256,7 +256,7 @@ class BilibiliService(SubtitleService):
         if show_progress:
             log_step("正在下载视频")
 
-        result = subprocess.run(['yt-dlp', '--no-progress', '-o', video_filename, f"https://www.bilibili.com/video/{bvid}"], capture_output=True)
+        result = subprocess.run(['yt-dlp', '--quiet', '--no-progress', '-o', video_filename, f"https://www.bilibili.com/video/{bvid}"], capture_output=True)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr.decode('utf-8', errors='ignore'))
 

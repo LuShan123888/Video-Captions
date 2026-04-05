@@ -120,6 +120,12 @@ make clean              # 清理构建文件
 - **opencc-python-reimplemented** (>=0.1.7): 繁简转换
 - **mcp** (>=1.0.0): MCP 协议支持
 
+## 开发注意事项
+
+- 调用 yt-dlp 时必须使用 `--quiet` 参数（仅 `--no-progress` 不够，无法抑制 "Download complete" 等消息）`[added: 2026-04-05]`
+- 抑制第三方库输出时，`subprocess.run(capture_output=True)` 只能抓子进程、`TQDM_DISABLE=1` 只能禁 tqdm 进度条、`contextlib.redirect_stdout` 只能抓 Python 级输出。huggingface_hub 的 "Download complete" 是 C 扩展直接写 fd，必须用 `os.dup2(devnull, 1/2)` 在 OS fd 层面重定向才可靠 `[updated: 2026-04-05]`
+- CLI 非 verbose 模式下 stdout 只能输出字幕内容，所有进度/日志信息必须走 stderr 且受 `_verbose_log` 控制 `[added: 2026-04-05]`
+
 ## 测试视频
 
 | 视频 | 平台 | 场景 |

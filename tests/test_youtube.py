@@ -14,7 +14,7 @@ from core.formatter import ResponseFormat
 
 
 YOUTUBE_WITH_SUBTITLES = "https://www.youtube.com/watch?v=kQ-aFczITCg"
-YOUTUBE_WITHOUT_SUBTITLES = "https://www.youtube.com/watch?v=5GJU5-UMNWk"
+YOUTUBE_WITHOUT_SUBTITLES = "https://www.youtube.com/watch?v=02U8vkSHyko"
 
 
 @pytest.mark.asyncio
