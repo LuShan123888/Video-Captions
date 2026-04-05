@@ -106,7 +106,7 @@ video-captions https://www.bilibili.com/video/BV16YC3BrEDz
 
 ### Agent Skill
 
-项目内置 Agent Skill（`.claude/skills/video-captions/`），兼容 Claude Code、Codex CLI、Gemini CLI、OpenClaw 等所有 AI 编程助手。安装 CLI 后即可使用：
+项目内置 Agent Skill（`skills/video-captions/SKILL.md`），兼容 Claude Code、Codex CLI、Gemini CLI、OpenClaw 等所有 AI 编程助手。安装 CLI 后即可使用：
 
 ```bash
 uv tool install video-captions
@@ -399,7 +399,7 @@ Configure in Claude Desktop's `claude_desktop_config.json`:
 
 ### Agent Skill
 
-A built-in Skill is available at `.claude/skills/video-captions/`, compatible with Claude Code, Codex CLI, Gemini CLI, OpenClaw and other AI coding agents. Install the CLI first:
+A built-in Skill is available at `skills/video-captions/SKILL.md`, compatible with Claude Code, Codex CLI, Gemini CLI, OpenClaw and other AI coding agents. Install the CLI first:
 
 ```bash
 uv tool install video-captions

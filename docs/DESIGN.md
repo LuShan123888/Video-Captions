@@ -217,7 +217,7 @@ src/
 - `video-captions-mcp` → `handler.mcp:main`
 
 **Agent Skill**：
-- 位置：`.claude/skills/video-captions/SKILL.md`
+- 位置：`skills/video-captions/SKILL.md`
 - 兼容：Claude Code、Codex CLI、Gemini CLI、OpenClaw
 - 分发：通过 [sync-skills](https://github.com/LuShan123888/sync-skills) 自动同步到各 Agent Skill 目录
 - 原理：纯声明式 Markdown，描述 CLI 命令、参数和用法，Agent 读取后直接调用 `video-captions` 命令
