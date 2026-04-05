@@ -2136,7 +2136,7 @@ wheels = [
 
 [[package]]
 name = "video-captions"
-version = "0.1.20260405.3"
+version = "0.1.20260405.4"
 source = { editable = "." }
 dependencies = [
     { name = "browser-cookie3" },
